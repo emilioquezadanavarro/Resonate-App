@@ -205,3 +205,19 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# IDE Settings (PyCharm/VS Code)
+.idea/
+.vscode/
+
+# Python compiled files
+__pycache__/
+*.py[cod]
+
+# Mac System Files
+.DS_Store
+
+# Secrets & Database (NEVER commit these)
+.env
+instance/
+*.db
