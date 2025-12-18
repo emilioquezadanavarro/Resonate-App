@@ -1,0 +1,14 @@
+# --- Core Framework ---
+Flask>=3.0.0
+python-dotenv
+
+# --- Database & Data ---
+Flask-SQLAlchemy
+numpy
+
+# --- AI & External APIs ---
+openai                 # Keeping this for Model A (Embeddings/Summaries)
+google-generativeai    # NEW: For Model B (The DJ / Gemini)
+
+# --- Utilities ---
+requests
