@@ -1,3 +1,20 @@
+"""
+app/database.py
+
+Defines the SQL database schema (ORM Models) for Resonate.
+
+This file handles the translation between Python Classes and SQLite tables.
+
+Key Models:
+- User: Stores profile info and AI personalization factors (Age/Gender).
+- JournalEntry: The core content (Text) + AI metadata (Music Query).
+- Mood: A static list of emotions (Happy, Sad, etc.) for tagging entries.
+- Song: Music metadata + Vector Embeddings (stored as JSON text).
+- Recommendation: Logs the match between an Entry and a Song.
+
+Dependencies: Flask-SQLAlchemy, JSON (for vector storage).
+
+"""
 # Import and create a db object:
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.sql import func
