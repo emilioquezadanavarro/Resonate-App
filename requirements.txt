@@ -4,6 +4,7 @@ python-dotenv
 
 # --- Database & Data ---
 Flask-SQLAlchemy
+sqlalchemy
 numpy
 
 # --- AI & External APIs ---
