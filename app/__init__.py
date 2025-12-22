@@ -17,6 +17,7 @@ from flask import Flask
 import os
 from .database import db
 from dotenv import load_dotenv
+from .routes import main
 
 # Load .env file (For API keys!)
 load_dotenv()
@@ -36,5 +37,8 @@ def create_app():
 
     # Link the database and the app.
     db.init_app(app)
+
+    # Register the Blueprint
+    app.register_blueprint(main)
 
     return app
