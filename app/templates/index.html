@@ -5,10 +5,43 @@
     <title>Resonate</title>
 </head>
 <body>
-    <h1>Resonate is Alive 🎵 !</h1>
-    <p>***** TEST 1 *****</p>
-    <p>If you can read this</p>
-    <p>your backend, database and routes</p>
-    <p>are all working perfectly.</p>
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <div style="background-color: #d4edda; color: #155724; padding: 10px; margin-bottom: 20px; border: 1px solid #c3e6cb; border-radius: 5px; text-align: center;">
+                {% for message in messages %}
+                    {{ message }}
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <div style="text-align: center; margin-top: 50px;">
+        <h1> Welcome to Resonate</h1>
+        <p>Your AI-powered journaling companion.</p>
+        <p>Track your mood, write your thoughts, and discover music that matches your vibe.</p>
+
+        <hr style="width: 50%; margin: 30px auto;">
+
+        {% if users %}
+            <h3>Registered Users</h3>
+            <form action="#" method="POST"> <label>Select your profile:</label>
+                <select name="user_id">
+                    {% for user in users %}
+                        <option value="{{ user.id }}">{{ user.username }}</option>
+                    {% endfor %}
+                </select>
+                <br><br>
+                <button type="submit">Login</button>
+            </form>
+
+            <p> - OR - </p>
+        {% endif %}
+
+        <h3>New User?</h3>
+        <a href="{{ url_for('main.create_profile') }}">
+            <button>Create New Profile</button>
+        </a>
+
+    </div>
 </body>
 </html>
