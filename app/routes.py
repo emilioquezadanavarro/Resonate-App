@@ -1,6 +1,7 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash
-from .database import User
+from flask import Blueprint, render_template, request, redirect, url_for, flash, session
+from .database import User, Mood
 from app.services.user_service import UserService
+from app.services.journal_services import JournalEntryService
 
 # Create the Blueprint object
 main = Blueprint('main', __name__)
@@ -34,3 +35,42 @@ def create_profile():
 
     return render_template('create_profile.html')
 
+
+@main.route('/login', methods=['POST'])
+def login():
+    # Capture the selected ID
+    user_id = request.form.get('user_id')
+
+    # Save to Session
+    session['user_id'] = user_id
+
+    # Redirect to profile page
+    return redirect(url_for('main.profile'))
+
+@main.route('/profile')
+def profile():
+    # Security check
+    if 'user_id' not in session:
+        return redirect(url_for('main.index'))
+
+    # Get user info
+    user_id = session['user_id']
+    user = UserService.get_user_by_id(user_id)
+
+    # Get user history
+    entries = JournalEntryService.get_entries_by_user(user_id)
+
+    return render_template('profile.html', user=user, entries=entries)
+
+
+@main.route('/journal')
+def journal():
+    # Security check
+    if 'user_id' not in session:
+        return redirect(url_for('main.index'))
+
+    # Fetch Moods for the buttons
+    moods = Mood.query.all()
+
+    # Show the Journaling Page
+    return render_template('journal.html', moods=moods)
