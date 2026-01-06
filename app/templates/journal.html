@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>New Entry - Resonate</title>
+</head>
+<body>
+
+    <div style="padding: 20px;">
+        <a href="{{ url_for('main.profile') }}">← Back to Profile</a>
+    </div>
+
+    <div style="text-align: center; margin-top: 20px;">
+        <h1>New Journal Entry</h1>
+
+        <form method="POST">
+
+            <h3>What's on your mind?</h3>
+            <textarea name="content" rows="8" cols="60" placeholder="Dear diary..." required></textarea>
+
+            <br><br>
+
+            <h3>How are you feeling? (Select all that apply)</h3>
+            <div style="max-width: 600px; margin: 0 auto; text-align: center;">
+                {% for mood in moods %}
+                    <span style="margin: 0 10px; display: inline-block;">
+                        <input type="checkbox" id="mood_{{ mood.id }}" name="moods" value="{{ mood.id }}">
+                        <label for="mood_{{ mood.id }}">{{ mood.label }}</label>
+                    </span>
+                {% endfor %}
+            </div>
+
+            <br><br>
+
+            <button type="submit" style="padding: 10px 20px; font-size: 16px; background-color: #007bff; color: white; border: none; cursor: pointer;">
+                Save Entry
+            </button>
+
+        </form>
+    </div>
+
+</body>
+</html>
