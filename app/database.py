@@ -78,7 +78,7 @@ class JournalEntry(db.Model):
 
     content = db.Column(db.Text, nullable=False)
     ai_summary = db.Column(db.Text, nullable=True)
-    music_query = db.Column(db.String, nullable=False)
+    music_query = db.Column(db.String(200), nullable=True)
     created_at = db.Column(db.DateTime(timezone=True), server_default=func.now())
 
     # M2M relationship to moods
