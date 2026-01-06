@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ user.username }}'s Profile</title>
+</head>
+<body>
+    <div style="display: flex; justify-content: space-between; align-items: center; padding: 20px;">
+        <h1>Hi, {{ user.first_name }}!</h1>
+        <a href="{{ url_for('main.index') }}">Logout</a>
+    </div>
+
+    <hr>
+
+    <div style="text-align: center; margin: 40px;">
+        <h3>How are you feeling right now?</h3>
+        <a href="{{ url_for('main.journal') }}">
+            <button style="padding: 15px 30px; font-size: 18px; cursor: pointer;">
+                Write New Journal Entry
+            </button>
+        </a>
+    </div>
+
+    <div style="margin: 20px;">
+        <h3>Your History</h3>
+
+        {% if entries %}
+            <ul>
+                {% for entry in entries %}
+                    <li>
+                        <strong>{{ entry.created_at.strftime('%Y-%m-%d') }}:</strong>
+                        {{ entry.content[:50] }}... </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>You haven't written any entries yet. Start today!</p>
+        {% endif %}
+    </div>
+
+</body>
+</html>
