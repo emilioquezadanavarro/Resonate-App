@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Entry Details</title>
+</head>
+<body>
+
+    <div style="padding: 20px;">
+        <a href="{{ url_for('main.profile') }}">← Back to Dashboard</a>
+    </div>
+
+    <div style="max-width: 800px; margin: 0 auto; padding: 20px;">
+
+        <h2 style="color: #555;">{{ entry.created_at.strftime('%B %d, %Y') }}</h2>
+
+        <div style="margin-bottom: 20px;">
+            {% for mood in entry.moods %}
+                <span style="background-color: #e0e0e0; padding: 5px 10px; border-radius: 15px; margin-right: 5px; font-size: 14px;">
+                    {{ mood.label }}
+                </span>
+            {% endfor %}
+        </div>
+
+        <hr>
+
+        <div style="font-size: 18px; line-height: 1.6; margin: 30px 0; white-space: pre-wrap; text-align: center">
+            {{ entry.content }}
+        </div>
+
+        <hr>
+
+        <div style="background-color: #f8f9fa; padding: 20px; border-radius: 10px; border: 1px solid #ddd; text-align: center;">
+            <h3>🤖 AI Insights</h3>
+
+            {% if entry.ai_summary %}
+                <p><strong>Summary:</strong> {{ entry.ai_summary }}</p>
+                <p><strong>Music Vibe:</strong> {{ entry.music_query }}</p>
+            {% else %}
+                <p>This entry hasn't been analyzed yet.</p>
+                <form method="POST" action="#"> <button type="submit" style="padding: 10px 20px; background-color: #6f42c1; color: white; border: none; cursor: pointer; font-size: 16px;">
+                        ✨ Analyze with AI
+                    </button>
+                </form>
+            {% endif %}
+        </div>
+
+    </div>
+
+</body>
+</html>
