@@ -63,14 +63,30 @@ def profile():
     return render_template('profile.html', user=user, entries=entries)
 
 
-@main.route('/journal')
+@main.route('/journal', methods=['GET', 'POST'])
 def journal():
+
     # Security check
     if 'user_id' not in session:
         return redirect(url_for('main.index'))
+
+    if request.method == 'POST':
+
+        # Get user info
+        user_id = session['user_id']
+        content = request.form.get('content')
+        mood_ids = request.form.getlist('moods')
+
+        # Create the new entry
+        JournalEntryService.create_entry(user_id, content, mood_ids)
+
+        # Give feedback and leave the page
+        flash("Entry saved successfully! 📝")
+        return redirect(url_for('main.profile'))
 
     # Fetch Moods for the buttons
     moods = Mood.query.all()
 
     # Show the Journaling Page
     return render_template('journal.html', moods=moods)
+
