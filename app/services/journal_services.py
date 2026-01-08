@@ -34,3 +34,6 @@ class JournalEntryService:
             db.session.rollback()
             return None
 
+    @staticmethod
+    def get_entry_by_id(entry_id):
+        return JournalEntry.query.get(entry_id)
