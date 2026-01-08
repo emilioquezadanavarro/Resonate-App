@@ -38,8 +38,11 @@
             <ul>
                 {% for entry in entries %}
                     <li>
-                        <strong>{{ entry.created_at.strftime('%Y-%m-%d') }}:</strong>
-                        {{ entry.content[:50] }}... </li>
+                        <a href="{{ url_for('main.entry_detail', entry_id=entry.id) }}">
+                            <strong>{{ entry.created_at.strftime('%Y-%m-%d') }}:</strong>
+                            {{ entry.content[:50] }}...
+                        </a>
+                    </li>
                 {% endfor %}
             </ul>
         {% else %}
