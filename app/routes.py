@@ -90,3 +90,17 @@ def journal():
     # Show the Journaling Page
     return render_template('journal.html', moods=moods)
 
+@main.route('/entry/<int:entry_id>')
+def entry_detail(entry_id):
+
+    # Security check
+    if 'user_id' not in session:
+        return redirect(url_for('main.index'))
+
+    # Get the entry object
+    entry = JournalEntryService.get_entry_by_id(entry_id)
+
+    if not entry or entry.user_id != int(session['user_id']):
+        return redirect(url_for('main.profile'))
+
+    return render_template('entry_detail.html', entry=entry)
