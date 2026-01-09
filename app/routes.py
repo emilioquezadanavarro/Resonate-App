@@ -104,3 +104,57 @@ def entry_detail(entry_id):
         return redirect(url_for('main.profile'))
 
     return render_template('entry_detail.html', entry=entry)
+
+@main.route('/entry/<int:entry_id>/delete', methods=['POST'])
+def delete_entry(entry_id):
+
+    # Security check
+    if 'user_id' not in session:
+        return redirect(url_for('main.index'))
+
+    # Get the entry object
+    entry = JournalEntryService.get_entry_by_id(entry_id)
+
+    if not entry or entry.user_id != int(session['user_id']):
+        return redirect(url_for('main.profile'))
+
+    # Delete the entry
+    JournalEntryService.delete_entry_by_id(entry_id)
+
+    # Give feedback and leave the page
+    flash("Entry deleted successfully! 🗑️")
+
+    return redirect(url_for('main.profile'))
+
+
+@main.route('/entry/<int:entry_id>/update', methods=['GET', 'POST'])
+def update_entry(entry_id):
+
+    # Security check
+    if 'user_id' not in session:
+        return redirect(url_for('main.index'))
+
+    # Get the entry object
+    entry = JournalEntryService.get_entry_by_id(entry_id)
+
+    if not entry or entry.user_id != int(session['user_id']):
+        return redirect(url_for('main.profile'))
+
+    if request.method == 'POST':
+
+        new_content = request.form.get('new_content')
+
+        if not new_content:
+            flash("Entry content can't be empty.", 'error')
+            return redirect(url_for('main.entry_detail', entry_id=entry_id))
+
+        updated_entry = JournalEntryService.update_entry_by_id(entry_id, new_content)
+
+        if updated_entry:
+            flash("Entry updated successfully!", 'success')
+            return redirect(url_for('main.entry_detail', entry_id=entry_id))
+        else:
+            flash("Error updating entry.", 'error')
+            return redirect(url_for('main.entry_detail', entry_id=entry_id))
+
+    return render_template('edit_entry.html', entry=entry)
