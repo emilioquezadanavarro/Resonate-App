@@ -25,7 +25,8 @@
         {% if users %}
             <h3>Registered Users</h3>
             <form action="{{ url_for('main.login') }}" method="POST"> <label>Select your profile:</label>
-                <select name="user_id">
+                <select name="user_id" required>
+                    <option value="" disabled selected>-- Select a profile 👤 --</option>
                     {% for user in users %}
                         <option value="{{ user.id }}">{{ user.username }}</option>
                     {% endfor %}
@@ -33,7 +34,6 @@
                 <br><br>
                 <button type="submit">Login</button>
             </form>
-
             <p> - OR - </p>
         {% endif %}
 
