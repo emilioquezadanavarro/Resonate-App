@@ -37,3 +37,46 @@ class JournalEntryService:
     @staticmethod
     def get_entry_by_id(entry_id):
         return JournalEntry.query.get(entry_id)
+
+    @staticmethod
+    def update_entry_by_id(entry_id, new_content):
+
+        try:
+
+            entry_to_update = JournalEntry.query.get(entry_id)
+
+            if entry_to_update:
+
+                entry_to_update.content = new_content
+
+                db.session.commit()
+
+                return entry_to_update
+
+            return None
+
+        except Exception as e:
+            print(f"Service Error: {e} ❌")
+            db.session.rollback()
+            return None
+
+    @staticmethod
+    def delete_entry_by_id(entry_id):
+
+        try:
+
+            entry_to_delete = JournalEntry.query.get(entry_id)
+
+            if entry_to_delete:
+
+                db.session.delete(entry_to_delete)
+                db.session.commit()
+
+                return True
+
+            return None
+
+        except Exception as e:
+            print(f"Service Error: {e} ❌")
+            db.session.rollback()
+            return None
