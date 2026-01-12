@@ -1,7 +1,8 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
-from .database import User, Mood
+from .database import db, User, Mood
 from app.services.user_service import UserService
 from app.services.journal_services import JournalEntryService
+from app.services.ai_psychologist import AIPsychologist
 
 # Create the Blueprint object
 main = Blueprint('main', __name__)
@@ -158,3 +159,35 @@ def update_entry(entry_id):
             return redirect(url_for('main.entry_detail', entry_id=entry_id))
 
     return render_template('edit_entry.html', entry=entry)
+
+@main.route('/entry/<int:entry_id>/analyze', methods = ['POST'])
+def analyze_entry(entry_id):
+    # Security check
+    if 'user_id' not in session:
+        return redirect(url_for('main.index'))
+
+    # Get the entry object
+    entry = JournalEntryService.get_entry_by_id(entry_id)
+
+    if not entry or entry.user_id != int(session['user_id']):
+        return redirect(url_for('main.profile'))
+
+    # Prepare Data for AI
+    # We need to convert the mood objects (e.g., [Mood<Happy>]) into text (e.g., ["Happy"])
+    mood_labels = [m.label for m in entry.moods]
+
+    # Call the Psychologist
+    summary = AIPsychologist.analyze_sentiment(entry.content, mood_labels)
+
+    # Save to database
+    if summary:
+        entry.ai_summary = summary
+        db.session.commit()
+        flash("AI Analysis complete! 🧠", 'success')
+    else:
+        flash("AI could not analyze this entry. Try again later.", 'error')
+
+    # Go back to the detail page
+    return redirect(url_for('main.entry_detail', entry_id=entry_id))
+
+
