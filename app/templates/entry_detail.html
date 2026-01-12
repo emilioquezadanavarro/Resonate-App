@@ -53,7 +53,7 @@
                 <p><strong>Music Vibe:</strong> {{ entry.music_query }}</p>
             {% else %}
                 <p>This entry hasn't been analyzed yet.</p>
-                <form method="POST" action="#"> <button type="submit" style="padding: 10px 20px; background-color: #6f42c1; color: white; border: none; cursor: pointer; font-size: 16px;">
+                <form method="POST" action="{{ url_for('main.analyze_entry', entry_id=entry.id) }}" style="text-align: center"> <button type="submit" style="padding: 10px 20px; background-color: #6f42c1; color: white; border: none; cursor: pointer; font-size: 16px;">
                         ✨ Analyze with AI
                     </button>
                 </form>
