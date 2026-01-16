@@ -3,6 +3,7 @@ from .database import db, User, Mood
 from app.services.user_service import UserService
 from app.services.journal_services import JournalEntryService
 from app.services.ai_psychologist import AIPsychologist
+from app.services.ai_recommendation import AIRecommendation
 
 # Create the Blueprint object
 main = Blueprint('main', __name__)
@@ -176,18 +177,43 @@ def analyze_entry(entry_id):
     # We need to convert the mood objects (e.g., [Mood<Happy>]) into text (e.g., ["Happy"])
     mood_labels = [m.label for m in entry.moods]
 
-    # Call the Psychologist
+    # PHASE 1: The Psychologist
     summary = AIPsychologist.analyze_sentiment(entry.content, mood_labels)
 
     # Save to database
     if summary:
+        # SAVE POINT 1: Secure the summary immediately!
         entry.ai_summary = summary
         db.session.commit()
-        flash("AI Analysis complete! 🧠", 'success')
+        #flash("AI Analysis complete! 🧠", 'success')
     else:
         flash("AI could not analyze this entry. Try again later.", 'error')
+        return redirect(url_for('main.entry_detail', entry_id=entry_id))
 
-    # Go back to the detail page
+    # PHASE 2: Music Recommendation
+    # We wrap this in a try/except block so a DJ failure doesn't crash the app
+    try:
+        music_recommendation = AIRecommendation.music_recommendation(entry.content, mood_labels, summary)
+
+        if music_recommendation:
+            # SAVE POINT 2: Secure the music recommendation!
+            entry.music_query = music_recommendation
+            db.session.commit()
+
+            # CHECK: Is it the "Success" list or the "Error" message?
+            if "No music found" in music_recommendation:
+                # It saved, but it's an error message -> YELLOW Warning
+                flash("Analysis complete, but the we couldn't find songs. 🧠", 'warning')
+            else:
+                # It's a real song list -> GREEN Success
+                flash("AI Analysis & Music Curation complete! 🧠🎧", 'success')
+
+        else:
+            flash("Analysis complete, but the we couldn't find songs. 🧠", 'warning')
+
+    except Exception as e:
+        print(f"Music Recommendation error: {e}")
+        flash("Analysis complete, but music generation failed. 🧠", 'warning')
+
     return redirect(url_for('main.entry_detail', entry_id=entry_id))
-
 
