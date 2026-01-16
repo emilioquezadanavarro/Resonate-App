@@ -14,12 +14,27 @@
         {% if messages %}
             <div style="max-width: 800px; margin: 0 auto; margin-bottom: 20px;">
                 {% for category, message in messages %}
-                    <div style="padding: 15px; border-radius: 5px; text-align: center;
-                        background-color: {% if category == 'error' %} #f8d7da {% else %} #d4edda {% endif %};
-                        color: {% if category == 'error' %} #721c24 {% else %} #155724 {% endif %};
-                        border: 1px solid {% if category == 'error' %} #f5c6cb {% else %} #c3e6cb {% endif %};">
+
+                    {% if category == 'error' %}
+                        {% set bg_color = '#f8d7da' %}     {% set text_color = '#721c24' %}
+                        {% set border_color = '#f5c6cb' %}
+
+                    {% elif category == 'warning' %}
+                        {% set bg_color = '#fff3cd' %}     {% set text_color = '#856404' %}
+                        {% set border_color = '#ffeeba' %}
+
+                    {% else %}
+                        {% set bg_color = '#d4edda' %}     {% set text_color = '#155724' %}
+                        {% set border_color = '#c3e6cb' %}
+                    {% endif %}
+
+                    <div style="padding: 15px; border-radius: 5px; text-align: center; margin-bottom: 10px;
+                        background-color: {{ bg_color }};
+                        color: {{ text_color }};
+                        border: 1px solid {{ border_color }};">
                         {{ message }}
                     </div>
+
                 {% endfor %}
             </div>
         {% endif %}
@@ -50,7 +65,10 @@
 
             {% if entry.ai_summary %}
                 <p><strong>Summary:</strong> {{ entry.ai_summary }}</p>
-                <p><strong>Music Vibe:</strong> {{ entry.music_query }}</p>
+            <div style="text-align: left; margin-top: 10px;">
+                <strong>Music Recommendation:</strong>
+                <div style="white-space: pre-wrap; margin-top: 5px; color: #555;">{{ entry.music_query }}</div>
+            </div>
             {% else %}
                 <p>This entry hasn't been analyzed yet.</p>
                 <form method="POST" action="{{ url_for('main.analyze_entry', entry_id=entry.id) }}" style="text-align: center"> <button type="submit" style="padding: 10px 20px; background-color: #6f42c1; color: white; border: none; cursor: pointer; font-size: 16px;">
