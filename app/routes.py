@@ -1,9 +1,11 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, session
+from flask import Blueprint, render_template, request, redirect, url_for, flash, session, jsonify
 from .database import db, User, Mood
 from app.services.user_service import UserService
 from app.services.journal_services import JournalEntryService
 from app.services.ai_psychologist import AIPsychologist
 from app.services.ai_recommendation import AIRecommendation
+from app.services.vector_engine import vector_engine
+from app.services.ai_memory_agent import memory_agent
 
 # Create the Blueprint object
 main = Blueprint('main', __name__)
@@ -80,7 +82,26 @@ def journal():
         mood_ids = request.form.getlist('moods')
 
         # Create the new entry
-        JournalEntryService.create_entry(user_id, content, mood_ids)
+        new_entry_obj = JournalEntryService.create_entry(user_id, content, mood_ids)
+
+        # Get the Mood Labels (Needed for Memory)
+        # We query the labels since the Vector Engine needs words ("Happy"), not IDs ("1")
+        current_moods = Mood.query.filter(Mood.id.in_(mood_ids)).all()
+        mood_labels = [m.label for m in current_moods]
+
+        # Vectorize the new entry
+        try:
+
+            vector_engine.add_entry(
+                entry_id=new_entry_obj.id,
+                text=content,
+                user_id=user_id,
+                mood_tags=mood_labels
+                )
+
+        except Exception as e:
+            # If the Memory Bank fails, we still want the user to proceed
+            print(f"Vector Engine Error: {e}")
 
         # Give feedback and leave the page
         flash("Entry saved successfully! 📝")
@@ -120,8 +141,14 @@ def delete_entry(entry_id):
     if not entry or entry.user_id != int(session['user_id']):
         return redirect(url_for('main.profile'))
 
-    # Delete the entry
+    # Delete from SQL Database (The Journal)
     JournalEntryService.delete_entry_by_id(entry_id)
+
+    # Delete from Vector Database (The Memory)
+    try:
+        vector_engine.delete_entry(entry_id)
+    except Exception as e:
+        print(f"Warning: Could not delete vector memory: {e}")
 
     # Give feedback and leave the page
     flash("Entry deleted successfully! 🗑️")
@@ -217,3 +244,27 @@ def analyze_entry(entry_id):
 
     return redirect(url_for('main.entry_detail', entry_id=entry_id))
 
+@main.route('/chat', methods=['POST'])
+def chat():
+    # Security Check
+    # If the user is not logged in, kick them out (or return error)
+    if 'user_id' not in session:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    # Get Data (JSON style)
+    # We use get_json() because the frontend sends data via JavaScript
+    data = request.get_json()
+    user_message = data.get('message')
+
+    # Get the real User ID from the session
+    user_id = session['user_id']
+
+    if not user_message:
+        return jsonify({"error": "No message provided"}), 400
+
+    # Call the Brain!
+    # Pass the REAL user_id
+    ai_response = memory_agent.chat(user_message, str(user_id))
+
+    # Return the answer
+    return jsonify({"response": ai_response})
