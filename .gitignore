@@ -221,3 +221,6 @@ __pycache__/
 .env
 instance/
 *.db
+
+Vector DB
+chroma_db
