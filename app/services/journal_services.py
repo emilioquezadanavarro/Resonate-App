@@ -39,7 +39,7 @@ class JournalEntryService:
         return JournalEntry.query.get(entry_id)
 
     @staticmethod
-    def update_entry_by_id(entry_id, new_content):
+    def update_entry_by_id(entry_id, new_content, mood_ids=None):
 
         try:
 
@@ -47,7 +47,19 @@ class JournalEntryService:
 
             if entry_to_update:
 
+                # Update Content
                 entry_to_update.content = new_content
+
+                # Update Moods (If provided)
+                if mood_ids is not None:
+                    # Clear existing moods first
+                    entry_to_update.moods = []
+
+                    # Add the new selection
+                    for m_id in mood_ids:
+                        mood = Mood.query.get(m_id)
+                        if mood:
+                            entry_to_update.moods.append(mood)
 
                 db.session.commit()
 
