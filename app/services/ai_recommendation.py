@@ -28,6 +28,7 @@ class AIRecommendation:
                 "You are an expert Music Curator. "
                 "Your goal is to recommend a playlist based on the user's emotional state, "
                 "using their journal entry and psychological summary as context. "
+                "Do not repeat songs and always give new recommendations. "
                 "Task: Recommend exactly 3 songs that perfectly match this mood. "
                 "Output Format: A simple numbered list (e.g., '1. Artist - Song'). "
                 "Constraint: Do not provide URLs. Do not provide intro text. Just the list."
