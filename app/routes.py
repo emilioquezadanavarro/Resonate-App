@@ -166,27 +166,60 @@ def update_entry(entry_id):
     # Get the entry object
     entry = JournalEntryService.get_entry_by_id(entry_id)
 
+    # Ownership check
     if not entry or entry.user_id != int(session['user_id']):
         return redirect(url_for('main.profile'))
 
     if request.method == 'POST':
 
         new_content = request.form.get('new_content')
+        new_mood_ids = request.form.getlist('moods')  # Capture the Mood checkboxes
 
         if not new_content:
             flash("Entry content can't be empty.", 'error')
             return redirect(url_for('main.entry_detail', entry_id=entry_id))
 
-        updated_entry = JournalEntryService.update_entry_by_id(entry_id, new_content)
+        # Update the Main Database (SQL)
+        updated_entry = JournalEntryService.update_entry_by_id(entry_id, new_content, new_mood_ids)
 
         if updated_entry:
+            # ======= SYNC START =======
+            # Update the Vector DB
+            try:
+                # A - Delete the old memory
+                vector_engine.delete_entry(entry_id)
+
+                # B. Get the NEW mood labels
+                # Since we just updated the DB, 'updated_entry.moods' has the new list.
+                current_mood_tags = [m.label for m in updated_entry.moods]
+
+                # C. Create the new memory
+                vector_engine.add_entry(
+                    entry_id,
+                    new_content,
+                    session['user_id'],
+                    current_mood_tags  # Passing the list of strings of the updated entry ["Happy", "Calm"]
+                )
+
+                print(f"✅ Synced update for Entry {entry_id} in Vector DB.")
+
+            except Exception as e:
+                # If the AI update fails, don't crash the web app. Just log it.
+                print(f"⚠️ Warning: Vector update failed: {e}")
+
+            # ======= SYNC END =======
+
             flash("Entry updated successfully!", 'success')
             return redirect(url_for('main.entry_detail', entry_id=entry_id))
         else:
             flash("Error updating entry.", 'error')
             return redirect(url_for('main.entry_detail', entry_id=entry_id))
 
-    return render_template('edit_entry.html', entry=entry)
+    # --- GET REQUEST ---
+    # We need to fetch ALL moods so the user can choose from them
+    all_moods = Mood.query.all()
+
+    return render_template('edit_entry.html', entry=entry, moods=all_moods)
 
 @main.route('/entry/<int:entry_id>/analyze', methods = ['POST'])
 def analyze_entry(entry_id):
