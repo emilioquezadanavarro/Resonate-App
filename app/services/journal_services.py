@@ -61,6 +61,11 @@ class JournalEntryService:
                         if mood:
                             entry_to_update.moods.append(mood)
 
+                # Deleting the old summary and music query so user can click "Analyze" again.
+                entry_to_update.ai_summary = None
+                entry_to_update.music_query = None
+
+                # Commit to DB
                 db.session.commit()
 
                 return entry_to_update
