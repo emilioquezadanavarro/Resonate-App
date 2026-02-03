@@ -6,6 +6,7 @@ from app.services.ai_psychologist import AIPsychologist
 from app.services.ai_recommendation import AIRecommendation
 from app.services.vector_engine import vector_engine
 from app.services.ai_memory_agent import memory_agent
+from app.services.past_recommendation_service import PastRecommendationService
 
 # Create the Blueprint object
 main = Blueprint('main', __name__)
@@ -25,7 +26,19 @@ def create_profile():
         first_name = request.form.get('first_name')
         last_name = request.form.get('last_name')
         gender = request.form.get('gender')
-        age = request.form.get('age')
+        age_input = request.form.get('age')
+
+        # Safety Check: Is age_input a number?
+        if not age_input or not age_input.isdigit():
+            flash("Please enter a valid age.", "error")
+            return redirect(url_for('create_profile'))
+
+        age = int(age_input)
+
+        # The 18+ Check
+        if age < 18:
+            flash("You must be 18 or older to use this app.", "error")
+            return redirect(url_for('create_profile'))
 
         new_user = UserService.create_user(username, first_name, last_name, gender, age)
 
@@ -251,24 +264,50 @@ def analyze_entry(entry_id):
         return redirect(url_for('main.entry_detail', entry_id=entry_id))
 
     # PHASE 2: Music Recommendation
-    # We wrap this in a try/except block so a DJ failure doesn't crash the app
-    try:
-        music_recommendation = AIRecommendation.music_recommendation(entry.content, mood_labels, summary)
 
-        if music_recommendation:
-            # SAVE POINT 2: Secure the music recommendation!
-            entry.music_query = music_recommendation
+    try:
+        # Getting the blacklist
+        # Check what the user has already heard
+
+        excluded_songs = PastRecommendationService.get_recent_recommendations(
+            user_id=int(session['user_id']),
+            item_type="song"
+        )
+
+        # Call AI
+        # Now returns a Python LIST of dictionaries: [{'title': 'X', 'artist': 'Y'}]
+        recommendations_list = AIRecommendation.music_recommendation(
+            entry.content,
+            mood_labels,
+            summary,
+            excluded_songs
+        )
+
+        if recommendations_list:
+            # Save to history
+            # This logs the specific items so we don't repeat them later
+            PastRecommendationService.save_recommendations(
+                user_id=int(session['user_id']),
+                items=recommendations_list,
+                item_type="song",
+                journal_id=entry.id,
+            )
+
+            # Save to Journal Entry
+            # Frontend expects a String.
+            # Example result: "1. Song by Artist \n 2. Song by Artist"
+            formatted_string = ""
+            for i, item in enumerate(recommendations_list, 1):
+                formatted_string += f"{i}. {item.get('title')} - {item.get('artist')}\n"
+
+            entry.music_query = formatted_string
             db.session.commit()
 
-            # CHECK: Is it the "Success" list or the "Error" message?
-            if "No music found" in music_recommendation:
-                # It saved, but it's an error message -> YELLOW Warning
-                flash("Analysis complete, but the we couldn't find songs. 🧠", 'warning')
-            else:
-                # It's a real song list -> GREEN Success
-                flash("AI Analysis & Music Curation complete! 🧠🎧", 'success')
+            flash("AI Analysis & Music Curation complete! 🧠🎧", 'success')
 
         else:
+
+            # It saved, but it's an error message -> YELLOW Warning
             flash("Analysis complete, but the we couldn't find songs. 🧠", 'warning')
 
     except Exception as e:
