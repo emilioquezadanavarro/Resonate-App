@@ -28,7 +28,7 @@ def setup():
             # Seed Moods (only if empty)
             if Mood.query.count() == 0:
                 print("Seeding initial moods 🌱 ...")
-                moods = ["Happy", "Sad", "Energetic", "Calm", "Anxious", "Focused", "Melancholic", "Excited"]
+                moods = ["Happy", "Sad", "Energetic", "Calm", "Anxious", "Focused", "Melancholic", "Excited", "Nostalgic", "Lonely", "Angry", "Frustrated", "Grateful", "Bored", "Confused"]
                 for label in moods:
                     db.session.add(Mood(label=label))
                 db.session.commit()
