@@ -1,5 +1,6 @@
 from app.services.vector_engine import vector_engine
 from langchain.tools import tool
+from app.services.ai_library_agent import library_agent
 
 @tool # LangChain Tool Object
 def search_journal_memory(query_text: str, user_id: int, result_limit: int = 3) -> str:
@@ -47,3 +48,17 @@ def search_journal_memory(query_text: str, user_id: int, result_limit: int = 3) 
     else:
         print(f"--- END DEBUG ---\n")
         return "No memories found"
+
+
+@tool
+def consult_librarian(emotion_or_topic: str) -> str:
+    """
+    Use this tool ONLY when the user asks for books, articles, or reading recommendations.
+
+    Args:
+        emotion_or_topic: The specific feeling or topic (e.g. "Anxiety", "Grief").
+
+    """
+
+    # We delegate to the Library Agent's "Reflexion Loop"
+    return library_agent.get_recommendations(emotion_or_topic)
