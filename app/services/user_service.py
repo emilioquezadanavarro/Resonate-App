@@ -14,7 +14,7 @@ class UserService:
 
             db.session.add(new_user)
             db.session.commit()
-            print(f"Service: Created user '{username}' ✅")
+            print(f"Service: User '{username}' created. ID: {new_user.id} ✅")
             return new_user
 
         except Exception as e:
