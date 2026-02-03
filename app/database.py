@@ -110,8 +110,11 @@ class Song(db.Model):
 class Recommendation(db.Model):
 
     """
-    # This acts as a log of what the AI gave the user
-    # It needs ForeignKeys to both JournalEntry and Song
+        Log of ALL AI suggestions (Songs, Books, Articles).
+
+        Used for:
+        1. Tracking history.
+        2. "Anti-Repetition" (Blacklisting recently seen items).
 
     """
 
@@ -119,8 +122,10 @@ class Recommendation(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     journal_id = db.Column(db.Integer, db.ForeignKey('journal_entries.id'), nullable=False)
-    song_id = db.Column(db.Integer, db.ForeignKey('songs.id'), nullable=False)
+    # Generic title (Can be a Song Name OR a Book Title)
+    title = db.Column(db.String(200), nullable=False)
+    # Generic creator (Can be an Artist, Author, or Source)
+    creator = db.Column(db.String(200), nullable=True)
     type = db.Column(db.String(20), nullable=False)
-    ai_explanation = db.Column(db.Text, nullable=True)
-    is_like = db.Column(db.Boolean, nullable=True)
+    is_liked = db.Column(db.Boolean, nullable=True)
     created_at = db.Column(db.DateTime(timezone=True), server_default=func.now())
