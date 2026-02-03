@@ -13,16 +13,15 @@ class JournalEntryService:
             # Create the new entry object
             new_entry = JournalEntry(user_id=user_id, content=content)
 
-            # Link the Moods - Loop through the list of mood_ids
-            # For each ID, fetch the Mood object from the DB and then append it to new_entry.moods
-            if mood_ids:
-                for mood_id in mood_ids:
-                    mood = Mood.query.get(mood_id)
-                    if mood:
-                        new_entry.moods.append(mood)
-
             # Add entry to DB
             db.session.add(new_entry)
+
+            # Fetch and Attach Moods
+            if mood_ids:
+                # We fetch the actual Mood objects from the DB
+                moods = Mood.query.filter(Mood.id.in_(mood_ids)).all()
+                # We assign them. Since new_entry is in the session, this works perfectly.
+                new_entry.moods = moods
 
             # Commit to DB
             db.session.commit()
