@@ -87,7 +87,7 @@ class LibraryAgent:
 
         # Initialize Loop Variables
         feedback = ""
-        draft = ""
+        clean_draft = None
         max_retries = 3
 
         print(f"\n🔄 REFLEXION LOOP STARTED for emotion: '{emotion}'")
@@ -145,7 +145,22 @@ class LibraryAgent:
 
             # 5. Fallback
             # If we ran out of retries, return the last draft anyway (better than nothing)
-        print("Max retries reached. Returning best effort ⚠️")
+        print("Max retries reached ⚠️")
+
+        # Try to return the last attempt anyway
+        # Even if the Judge didn't love it (e.g. score 3), it might still be a valid list.
+        if 'clean_draft' in locals() and clean_draft:
+            try:
+                print("Attempting to parse the final draft as a fallback...")
+                real_book_list = ast.literal_eval(clean_draft)
+
+                if isinstance(real_book_list, list):
+                    print("Fallback successful. Returning imperfect list. 🤷‍♂️")
+                    return real_book_list
+            except Exception as e:
+                print(f"Fallback failed. syntax was broken: {e}")
+
+        # If everything truly failed (syntax errors), then return empty.
         return []
 
 # Create the Singleton Instance
