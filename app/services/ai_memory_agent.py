@@ -4,8 +4,9 @@ from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.chat_history import InMemoryChatMessageHistory
 from langchain_core.runnables.history import RunnableWithMessageHistory
-from app.services.tools import search_journal_memory
+from app.services.tools import search_journal_memory, consult_librarian
 from langchain_classic.agents import AgentExecutor, create_tool_calling_agent
+from langchain_tavily import TavilySearch
 
 # 1. Load the secret keys from .env
 load_dotenv()
@@ -23,35 +24,42 @@ class MemoryAgent:
 
         print(f"Initializing Memory Agent {name} ... 🤖")
 
+        # Instantiate WEB SEARCH
+        # This creates the actual tool object for the agent to use
+        self.web_search = TavilySearch(max_results=3)
+
+        # The Toolbox
+        # We create a list of all the special abilities this agent has.
+        # Even if there is only one tool, it must be inside a list [].
+        self.tools = [search_journal_memory, consult_librarian, self.web_search]
+
         # The Brain
         # Initialize the generic OpenAI model.
 
         self.llm = ChatOpenAI(
             model="gpt-4o-mini", # Fast, smart enough and cheap
-            temperature=0.3, # Low creativity, high factual accuracy
+            temperature=1.1, # Low creativity, high factual accuracy
             api_key=os.getenv("OPENAI_API_KEY")
-        ).bind_tools(
-            tools=[search_journal_memory,
-                   {"type": "web_search"}]
         )
-
-        # The Toolbox
-        # We create a list of all the special abilities this agent has.
-        # Even if there is only one tool, it must be inside a list [].
-        self.tools = [search_journal_memory]
 
         # The Personality
         self.prompt = ChatPromptTemplate.from_messages([
             ("system",
-             f"You are {name}, a helpful AI companion talking to User ID: {{user_id}}. "
-             f"TOOLS: Use 'search_journal_memory' for personal history and 'web_search_preview' for general knowledge and music recommendation.\n\n"
+             f"You are {name}, a helpful AI companion talking to User ID: {{user_id}}. \n\n"
+
+             f"YOUR TOOLS:\n"
+             f"1. search_journal_memory: Use for specific questions about the user's past.\n"
+             f"2. consult_librarian: Use this SPECIALLY when the user asks for books, reading, or resources to help with their feelings.\n"
+             f"3. web_search: Use this for web search, current events, factual info, specific music recommendations or everything that the user asks. \n\n"
+
+             f"COLLABORATION RULE:\n"
+             f"If the user asks for reading recommendations, DO NOT invent titles. "
+             f"Instead, use the 'consult_librarian' tool. "
+             f"Take the librarian's advice and present it warmly to the user.\n\n"
 
              f"CRITICAL INSTRUCTION FOR MEMORY:"
-             f"When you search the journal, you will receive multiple potential matches. "
-             f"Some may be IRRELEVANT noise. "
-             f"**You must explicitly FILTER the results.** "
-             f"Only base your answer on the entries that strictly match the user's specific topic. "
-             f"Ignore unrelated entries about weather, music, or other topics unless they are clearly connected."
+             f"When you search the journal, ignore irrelevant noise. "
+             f"Only base your answer on entries strictly matching the topic."
              ),
 
             # This is where the chat history gets injected automatically
@@ -100,7 +108,6 @@ class MemoryAgent:
             {"input": user_input,
             "user_id": user_id
              },
-
             config
         )
 
