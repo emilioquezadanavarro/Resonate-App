@@ -1,0 +1,153 @@
+from app.services.ai_judge_agent import judge_agent
+
+import os
+import ast
+from dotenv import load_dotenv
+from langchain_openai import ChatOpenAI
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.output_parsers import StrOutputParser
+
+# 1. Load the secret keys from .env
+load_dotenv()
+
+class LibraryAgent:
+    """
+    The Book Selector (The Generator).
+
+    It works in a loop with the Judge to find the best recommendation.
+
+    """
+    def __init__(self, name="Aioros"):
+
+        print(f"Initializing Library Agent {name} ... 🤖 📚")
+
+        # The Brain
+        # Initialize the generic OpenAI model.
+
+        self.llm = ChatOpenAI(
+            model="gpt-4o-mini", # Fast, smart enough and cheap
+            temperature=0.7, # Slightly creative to find interesting books.
+            api_key=os.getenv("OPENAI_API_KEY")
+        )
+
+        # The Output Parser
+        # This acts like a 'translator' that forces the AI to speak in String
+        self.parser = StrOutputParser()
+
+        self.prompt = ChatPromptTemplate.from_messages([
+            ("system", f"""
+            You are The Librarian, a wise and empathetic Bibliotherapist named {name}
+            Your goal is to prescribe literature to help people navigate their emotions.
+
+            INSTRUCTIONS:
+            1. Recommend 2 distinct items based on the user's emotion.
+            2. **CRITICAL FORMAT**: Do not write a paragraph. Return ONLY a raw Python list of dictionaries.
+            3. Structure: [{{{{'title': 'Title', 'author': 'Author', 'reason': 'One sentence explanation'}}}}]
+            4. Do not use Markdown formatting (no ```python). Just the raw list.
+            5. Be specific. Avoid generic self-help unless it's a perfect match.
+            
+            CONSTRAINT:
+            {{blacklist_instruction}}
+
+            CRITICAL INSTRUCTION (THE REFLEXION LOOP):
+            You have a strict Editor (The Judge) reviewing your work. 
+            If you receive FEEDBACK from the Judge below, you MUST adjust your recommendations to fix the specific errors mentioned.
+            - If the Judge says "Fake Book", find a real one.
+            - If the Judge says "Too Generic", find a deeper, less common recommendation.
+            """),
+
+            ("human", """
+            USER EMOTION: {emotion}
+
+            PREVIOUS CRITIC FEEDBACK (If any):
+            {feedback}
+
+            Generate your best recommendations now.
+            """)
+        ])
+
+        # The Assembler (The Chain)
+        self.chain = self.prompt | self.llm | self.parser
+
+    def get_recommendations(self, emotion: str, excluded_books=[]) -> list:
+        """
+        The public method called by Camus.
+        It runs the Reflexion Loop.
+
+        """
+
+        # Build the Blacklist Instruction String
+        blacklist_instruction = ""
+        if excluded_books:
+            black_list_str = ", ".join(excluded_books)
+            blacklist_instruction = (
+                f"\nIMPORTANT CONSTRAINT: The user has recently read these books: [{black_list_str}]. "
+                "Do not recommend them again. Find different literature."
+            )
+
+        # Initialize Loop Variables
+        feedback = ""
+        draft = ""
+        max_retries = 3
+
+        print(f"\n🔄 REFLEXION LOOP STARTED for emotion: '{emotion}'")
+
+        for attempt in range(max_retries):
+            print(f"   --- Attempt {attempt + 1}/{max_retries} ---")
+
+            # Generate Draft (Using the Chain)
+            # We pass 'feedback' (which is empty on the first run)
+            draft = self.chain.invoke({
+                "emotion": emotion,
+                "feedback": feedback,
+                "blacklist_instruction": blacklist_instruction
+            })
+
+            # Clean up markdown if the AI added it (e.g. ```python ... ```)
+            clean_draft = draft.strip()
+            if clean_draft.startswith("```"):
+                # Remove first and last lines (the backticks)
+                lines = clean_draft.split('\n')
+                if len(lines) > 2:
+                    clean_draft = "\n".join(lines[1:-1])
+
+
+            # Call the Judge
+            # We send the draft to the agent
+            judgment = judge_agent.evaluate(emotion, clean_draft)
+
+            score = judgment.get('score', 0)
+            critique = judgment.get('feedback', 'No feedback')
+
+            print(f"⚖️ Saga's Score: {score}/5")
+            print(f"📝 Saga's Feedback: {critique}")
+
+            # Decide
+            if score >= 4:
+
+                print("Draft Approved ✅!")
+
+                # PARSING MOMENT: Convert String -> Real Python List
+                try:
+                    real_book_list = ast.literal_eval(clean_draft)
+                    if isinstance(real_book_list, list):
+                        return real_book_list
+                    else:
+                        print("⚠️ AI output was not a list.")
+                        # If it failed to be a list, force a retry via feedback
+                        feedback = "System Error: Output was not a valid Python list."
+                except Exception as e:
+                    print(f"⚠️ Parsing Error: {e}")
+                    feedback = "System Error: Output syntax was invalid Python."
+            else:
+                # Update feedback for the next loop iteration
+                feedback = f"Saga's Feedback: {critique}"
+
+            # 5. Fallback
+            # If we ran out of retries, return the last draft anyway (better than nothing)
+        print("Max retries reached. Returning best effort ⚠️")
+        return []
+
+# Create the Singleton Instance
+library_agent = LibraryAgent()
+
