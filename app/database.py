@@ -121,7 +121,8 @@ class Recommendation(db.Model):
     __tablename__ = 'recommendations'
 
     id = db.Column(db.Integer, primary_key=True)
-    journal_id = db.Column(db.Integer, db.ForeignKey('journal_entries.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    journal_id = db.Column(db.Integer, db.ForeignKey('journal_entries.id'), nullable=True)
     # Generic title (Can be a Song Name OR a Book Title)
     title = db.Column(db.String(200), nullable=False)
     # Generic creator (Can be an Artist, Author, or Source)
