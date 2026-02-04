@@ -9,7 +9,7 @@ from app.services.user_service import UserService
 load_dotenv()
 client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
-class AIRecommendation:
+class MusicRecommendationAgent:
 
     @staticmethod
     def music_recommendation(content, mood_labels, ai_summary, age, gender, user_name, excluded_songs):
@@ -93,5 +93,5 @@ class AIRecommendation:
                 return []
 
         except Exception as e:
-            print(f" Music recommendation Error ❌ : {e}")
+            print(f" Music recommendation agent error ❌ : {e}")
             return []
