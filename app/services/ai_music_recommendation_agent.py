@@ -3,6 +3,7 @@ import ast
 from google import genai
 from google.genai import types
 from dotenv import load_dotenv
+from app.services.user_service import UserService
 
 # 1. Load the GEMINI secret API key
 load_dotenv()
@@ -11,16 +12,21 @@ client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 class AIRecommendation:
 
     @staticmethod
-    def music_recommendation(content, mood_labels, ai_summary, excluded_songs):
+    def music_recommendation(content, mood_labels, ai_summary, age, gender, user_name, excluded_songs):
         """
-            Generates music recommendations based on journal analysis.
+            Generates music recommendations based on journal analysis, age and gender.
 
             Args:
                 content (str): The journal text.
                 mood_labels (list): Detected moods.
                 ai_summary (str): The summary of the day.
+                age: The age of the user
+                gender: The gender of the user
+                user_name: The name of the user
                 excluded_songs (list): A list of song titles to AVOID (Blacklist).
         """
+
+        print(f"🎸 Looking for music recommendations for User: {user_name} / Age: {age} / Gender: {gender}")
 
         try:
             # Join the moods (e.g., "Sad, Anxious")
@@ -40,6 +46,8 @@ class AIRecommendation:
                 f"Journal content: \"{content}\"\n"
                 f"Detected Moods: {moods_str}\n"
                 f"Summary: {ai_summary}\n"
+                f"Age: {age}\n"
+                f"Gender: {gender}\n"
                 f"{blacklist_instruction}\n\n"
                 "Based on this, suggest 3 songs..."
             )
@@ -47,7 +55,7 @@ class AIRecommendation:
             # The Persona (System Prompt)
             system_instruction = (
                 "You are an expert Music Curator. "
-                "Your goal is to recommend a playlist based on the user's emotional state. "
+                "Your goal is to recommend a playlist based on the user's emotional state, age and gender. "
                 "Task: Recommend exactly 3 songs that match this mood. "
                 "Format: Return ONLY a raw Python list of dictionaries. "
                 "Example: [{'title': 'Song Name', 'artist': 'Artist Name', 'reason': 'Why it fits'}] "                
@@ -86,4 +94,4 @@ class AIRecommendation:
 
         except Exception as e:
             print(f" Music recommendation Error ❌ : {e}")
-            return "No music found for this entry."
+            return []

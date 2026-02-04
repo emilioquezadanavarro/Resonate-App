@@ -19,10 +19,10 @@ def get_session_history(session_id: str):
         store[session_id] = InMemoryChatMessageHistory()
     return store[session_id]
 
-class MemoryAgent:
+class ChatBoxAgent:
     def __init__(self, name="Camus"):
 
-        print(f"Initializing Memory Agent {name} ... 🤖")
+        print(f"Initializing Chat Box Agent {name} ... 🤖")
 
         # Instantiate WEB SEARCH
         # This creates the actual tool object for the agent to use
@@ -56,6 +56,14 @@ class MemoryAgent:
              f"If the user asks for reading recommendations, DO NOT invent titles. "
              f"Instead, use the 'consult_librarian' tool. "
              f"Take the librarian's advice and present it warmly to the user.\n\n"
+             
+             f"FORMATTING RULES:\n"
+             f"1. For MUSIC/SONG recommendations from Web Search: \n"
+             f"   - Do NOT provide URL links or sources.\n"
+             f"   - Format the output strictly as a clean numbered list.\n"
+             f"   - Style: '1. Song Title - Artist'\n"
+             f"   - Limit the list to EXACTLY 5 items (unless the user specifically asks for more).\n"
+             f"   - Add a brief 1-sentence vibe check if relevant.\n"
 
              f"CRITICAL INSTRUCTION FOR MEMORY:"
              f"When you search the journal, ignore irrelevant noise. "
@@ -95,7 +103,7 @@ class MemoryAgent:
         )
 
     def chat(self, user_input: str, user_id: str):
-        print(f"Agent is thinking for User {user_id}... 💭")  # Just for debugging
+        print(f"Chat box agent is thinking for User {user_id}... 💭")  # Just for debugging
 
         # Create a specific configuration for this user
         # This tells the system: "Load the chat history for THIS specific user_id"
@@ -115,4 +123,4 @@ class MemoryAgent:
         return response["output"]
 
 # Create the Singleton Instance
-memory_agent = MemoryAgent()
+chatbox_agent = ChatBoxAgent()
