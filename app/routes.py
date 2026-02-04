@@ -2,10 +2,10 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from .database import db, User, Mood
 from app.services.user_service import UserService
 from app.services.journal_services import JournalEntryService
-from app.services.ai_psychologist import AIPsychologist
-from app.services.ai_recommendation import AIRecommendation
+from app.services.ai_entry_summary_agent import SummaryAgent
+from app.services.ai_music_recommendation_agent import MusicRecommendationAgent
 from app.services.vector_engine import vector_engine
-from app.services.ai_memory_agent import memory_agent
+from app.services.ai_chatbox_agent import chatbox_agent
 from app.services.past_recommendation_service import PastRecommendationService
 
 # Create the Blueprint object
@@ -250,8 +250,8 @@ def analyze_entry(entry_id):
     # We need to convert the mood objects (e.g., [Mood<Happy>]) into text (e.g., ["Happy"])
     mood_labels = [m.label for m in entry.moods]
 
-    # PHASE 1: The Psychologist
-    summary = AIPsychologist.analyze_sentiment(entry.content, mood_labels)
+    # PHASE 1: The Entry Summary Agent
+    summary = SummaryAgent.analyze_sentiment(entry.content, mood_labels)
 
     # Save to database
     if summary:
@@ -260,12 +260,15 @@ def analyze_entry(entry_id):
         db.session.commit()
         #flash("AI Analysis complete! 🧠", 'success')
     else:
-        flash("AI could not analyze this entry. Try again later.", 'error')
+        flash("The summary agent could not analyze this entry. Try again later.", 'error')
         return redirect(url_for('main.entry_detail', entry_id=entry_id))
 
-    # PHASE 2: Music Recommendation
+    # PHASE 2: The music recommendation agent
 
     try:
+        # Get the user object
+        user = UserService.get_user_by_id(int(session['user_id']))
+
         # Getting the blacklist
         # Check what the user has already heard
 
@@ -276,11 +279,14 @@ def analyze_entry(entry_id):
 
         # Call AI
         # Now returns a Python LIST of dictionaries: [{'title': 'X', 'artist': 'Y'}]
-        recommendations_list = AIRecommendation.music_recommendation(
-            entry.content,
-            mood_labels,
-            summary,
-            excluded_songs
+        recommendations_list = MusicRecommendationAgent.music_recommendation(
+            content=entry.content,
+            mood_labels=mood_labels,
+            ai_summary=summary,
+            age=user.age,
+            gender=user.gender,
+            user_name=user.username,
+            excluded_songs=excluded_songs
         )
 
         if recommendations_list:
@@ -336,7 +342,7 @@ def chat():
 
     # Call the Brain!
     # Pass the REAL user_id
-    ai_response = memory_agent.chat(user_message, str(user_id))
+    ai_response = chatbox_agent.chat(user_message, str(user_id))
 
     # Return the answer
     return jsonify({"response": ai_response})
