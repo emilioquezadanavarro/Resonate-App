@@ -38,13 +38,20 @@ class LibraryAgent:
             ("system", f"""
             You are The Librarian, a wise and empathetic Bibliotherapist named {name}
             Your goal is to prescribe literature to help people navigate their emotions.
+            
+            USER PROFILE:
+            - Age: {{age}}
+            - Gender: {{gender}}
 
             INSTRUCTIONS:
-            1. Recommend 2 distinct items based on the user's emotion.
-            2. **CRITICAL FORMAT**: Do not write a paragraph. Return ONLY a raw Python list of dictionaries.
-            3. Structure: [{{{{'title': 'Title', 'author': 'Author', 'reason': 'One sentence explanation'}}}}]
-            4. Do not use Markdown formatting (no ```python). Just the raw list.
-            5. Be specific. Avoid generic self-help unless it's a perfect match.
+            1. Recommend 2 distinct items based on the user's emotion, {{age}} and {{gender}}
+            2. **Tailor your choices**: 
+               - For younger users (18-25), consider modern voices or coming-of-age classics.
+               - For older users, consider mature, reflective, or deep philosophical works.
+            3. **CRITICAL FORMAT**: Do not write a paragraph. Return ONLY a raw Python list of dictionaries.
+            4. Structure: [{{{{'title': 'Title', 'author': 'Author', 'reason': 'One sentence explanation'}}}}]
+            5. Do not use Markdown formatting (no ```python). Just the raw list.
+            6. Be specific. Avoid generic self-help unless it's a perfect match.
             
             CONSTRAINT:
             {{blacklist_instruction}}
@@ -69,7 +76,7 @@ class LibraryAgent:
         # The Assembler (The Chain)
         self.chain = self.prompt | self.llm | self.parser
 
-    def get_recommendations(self, emotion: str, excluded_books=[]) -> list:
+    def get_recommendations(self, emotion: str, age: int, gender: str, excluded_books=[]) -> list:
         """
         The public method called by Camus.
         It runs the Reflexion Loop.
@@ -99,6 +106,8 @@ class LibraryAgent:
             # We pass 'feedback' (which is empty on the first run)
             draft = self.chain.invoke({
                 "emotion": emotion,
+                "age": age,
+                "gender": gender,
                 "feedback": feedback,
                 "blacklist_instruction": blacklist_instruction
             })
@@ -149,7 +158,7 @@ class LibraryAgent:
 
         # Try to return the last attempt anyway
         # Even if the Judge didn't love it (e.g. score 3), it might still be a valid list.
-        if 'clean_draft' in locals() and clean_draft:
+        if clean_draft:
             try:
                 print("Attempting to parse the final draft as a fallback...")
                 real_book_list = ast.literal_eval(clean_draft)
