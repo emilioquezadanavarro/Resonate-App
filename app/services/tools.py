@@ -2,6 +2,7 @@ from app.services.vector_engine import vector_engine
 from langchain.tools import tool
 from app.services.ai_library_agent import library_agent
 from app.services.past_recommendation_service import PastRecommendationService
+from app.services.user_service import UserService
 
 @tool # LangChain Tool Object
 def search_journal_memory(query_text: str, user_id: int, result_limit: int = 3) -> str:
@@ -62,9 +63,21 @@ def consult_librarian(emotion_or_topic: str, user_id: int) -> str:
 
     """
 
-    print(f"📚 Tool triggered: Consulting Librarian for topic '{emotion_or_topic}'...")
+    print(f"📚 Tool triggered: Consulting Librarian for topic: '{emotion_or_topic}'")
 
     try:
+
+        user = UserService.get_user_by_id(int(user_id))
+
+        if user:
+            age = user.age
+            gender = user.gender
+        else:
+            age = 30
+            gender = "Neutral"
+
+        print(f"   -> User Profile Found: User ID {user_id}, Name: {user.username}, Age: {age}, Gender: {gender}")
+
         # Get history (The Blacklist)
         excluded_books = PastRecommendationService.get_recent_recommendations(
             user_id=user_id,
@@ -75,6 +88,8 @@ def consult_librarian(emotion_or_topic: str, user_id: int) -> str:
         # Returns a LIST of dicts: [{'title': '...', 'author': '...'}]
         recommendations_list = library_agent.get_recommendations(
             emotion=emotion_or_topic,
+            age=age,
+            gender=gender,
             excluded_books=excluded_books
         )
 
