@@ -7,7 +7,7 @@ load_dotenv()
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 
-class AIPsychologist:
+class SummaryAgent:
 
     @staticmethod
     def analyze_sentiment(content, mood_labels):
@@ -42,5 +42,5 @@ class AIPsychologist:
             return response.choices[0].message.content
 
         except Exception as e:
-            print(f"❌ Psychologist Error ❌: {e}")
+            print(f"❌ Summary Agent Error ❌: {e}")
             return "I'm having trouble connecting to my brain right now, but I hear you."
