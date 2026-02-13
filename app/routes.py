@@ -304,7 +304,7 @@ def analyze_entry(entry_id):
             # Example result: "1. Song by Artist \n 2. Song by Artist"
             formatted_string = ""
             for i, item in enumerate(recommendations_list, 1):
-                formatted_string += f"{i}. {item.get('title')} - {item.get('artist')}\n"
+                formatted_string += f"{i}. {item.get('title')} - {item.get('artist')}\n{item.get('reason')}\n\n"
 
             entry.music_query = formatted_string
             db.session.commit()
