@@ -3,9 +3,12 @@ from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import JsonOutputParser
+from langfuse import get_client
+from langchain_community.callbacks import get_openai_callback
 
-# 1. Load the secret keys from .env
+# 1. Load keys & Initialize Langfuse
 load_dotenv()
+langfuse = get_client()
 
 class JudgeAgent:
     """
@@ -75,21 +78,43 @@ class JudgeAgent:
         The public method called by the Librarian.
         Returns a dictionary: {'score': 4, 'feedback': '...'}
         """
-        try:
-            print(f"⚖️ {name} is auditing the draft...")
+        # Start the Main Span (The Whole Process)
+        with langfuse.start_as_current_observation(
+                as_type="generation", # "generation" because it's directly calling an LLM
+                name="Judge Agent Evaluation",
+                input={
+                    "emotion": emotion, "draft": draft,}
+        ) as generation:
 
-            # We invoke the chain with the TWO inputs
-            result = self.chain.invoke({
-                "emotion": emotion,
-                "draft": draft
-            })
+            # Capture tokens with the callback
+            with get_openai_callback() as callback:
 
-            return result
+                try:
+                    print(f"⚖️ {name} is auditing the draft...")
 
-        except Exception as e:
-            # Fallback in case of a crash
-            print(f"Judge Error: {e}")
-            return {"score": 0, "feedback": "Judge crashed. Rejecting draft for safety."}
+                    # We invoke the chain with the TWO inputs
+                    result = self.chain.invoke({
+                        "emotion": emotion,
+                        "draft": draft
+                    })
+
+                    generation.update(
+                        output=result,
+                        usage={
+                            "promptTokens": callback.prompt_tokens,
+                            "completionTokens": callback.completion_tokens,
+                            "totalTokens": callback.total_tokens
+                        }
+                    )
+
+                    return result
+
+
+                except Exception as e:
+                    # Fallback in case of a crash
+                    print(f"Judge Error: {e}")
+                    generation.update(level="ERROR", status_message=str(e))
+                    return {"score": 0, "feedback": "Judge crashed. Rejecting draft for safety."}
 
 # Create the Singleton Instance
 judge_agent = JudgeAgent()

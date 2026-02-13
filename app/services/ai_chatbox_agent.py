@@ -1,4 +1,6 @@
 import os
+
+from click import prompt
 from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
@@ -7,9 +9,14 @@ from langchain_core.runnables.history import RunnableWithMessageHistory
 from app.services.tools import search_journal_memory, consult_librarian
 from langchain_classic.agents import AgentExecutor, create_tool_calling_agent
 from langchain_tavily import TavilySearch
+from langfuse import get_client
+from langchain_community.callbacks import get_openai_callback
 
-# 1. Load the secret keys from .env
+# Load the secret keys from .env
 load_dotenv()
+
+# Initialize Langfuse
+langfuse = get_client()
 
 # Global storage for chat histories
 store = {}
@@ -103,24 +110,62 @@ class ChatBoxAgent:
         )
 
     def chat(self, user_input: str, user_id: str):
-        print(f"Chat box agent is thinking for User {user_id}... 💭")  # Just for debugging
 
-        # Create a specific configuration for this user
-        # This tells the system: "Load the chat history for THIS specific user_id"
-        config = {"configurable": {"session_id": user_id}}
+        # Langfuse - Start the Span (The "Folder" for this chat)
+        with langfuse.start_as_current_observation(
+                as_type="span",
+                name="Chat Bot Agent",
+                input={"chat_message": user_input, "user_id": user_id},
+        ) as span:
 
-        # Run the agent!
-        # input: The user's text
-        # config: The user's ID
-        response = self.agent_with_chat_history.invoke(
-            {"input": user_input,
-            "user_id": user_id
-             },
-            config
-        )
+            print(f"Chat box agent is thinking for User {user_id}... 💭")  # Just for debugging
 
-        # The response is a big object. Final answer string.
-        return response["output"]
+            # Create a specific configuration for this user
+            # This tells the system: "Load the chat history for THIS specific user_id"
+            config = {"configurable": {"session_id": user_id}}
+
+            # Langfuse - Start the Generation (The "File" for the AI cost)
+            with langfuse.start_as_current_observation(
+                    as_type="generation",
+                    name="Chat Messages Generation",
+                    model="gpt-4o-mini",
+                    input=user_input
+            ) as generation:
+
+                # We use this context manager to "catch" the tokens produced by the agent inside the block
+                with get_openai_callback() as callback:
+
+                    # Run the agent!
+                    # input: The user's text
+                    # config: The user's ID
+                    response = self.agent_with_chat_history.invoke(
+                        {"input": user_input,
+                        "user_id": user_id
+                         },
+                        config
+                    )
+
+                    # NOW 'callback' holds the numbers
+
+                # Update Generation using 'callback' data
+                # We use response["output"] because response is a Dict, not an Object
+                generation.update(
+                    output=response["output"],
+                    usage={
+                        "promptTokens": callback.prompt_tokens,
+                        "completionTokens": callback.completion_tokens,
+                        "totalTokens": callback.total_tokens
+                    }
+                )
+
+            # Update the parent span
+            span.update(output=response["output"])
+
+            # Send data to cloud
+            langfuse.flush()
+
+            # The response is a big object. Final answer string.
+            return response["output"]
 
 # Create the Singleton Instance
 chatbox_agent = ChatBoxAgent()
