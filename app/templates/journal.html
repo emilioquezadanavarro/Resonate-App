@@ -4,6 +4,17 @@
     <meta charset="UTF-8">
     <title>New Entry - Resonate</title>
 </head>
+<div style="text-align: center; margin-top: 10px;">
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for message in messages %}
+                    <div style="display: inline-block; padding: 10px 20px; background-color: #ffcccc; color: #cc0000; border-radius: 5px; border: 1px solid #ff0000; margin-bottom: 10px;">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
 <body>
 
     <div style="padding: 20px;">
@@ -16,15 +27,21 @@
         <form method="POST">
 
             <h3>What's on your mind?</h3>
-            <textarea name="content" rows="8" cols="60" placeholder="Dear diary..." required></textarea>
-
+            <textarea id="journal_content" name="content" rows="8" cols="60" placeholder="Dear diary..." maxlength="500" required>{{ content if content else '' }}</textarea>
+            <div id="char_count" style="font-size: 14px; color: #666; margin-top: 5px;">
+            0 / 500 characters
+            </div>
             <br><br>
 
             <h3>How are you feeling? (Select all that apply)</h3>
             <div style="max-width: 600px; margin: 0 auto; text-align: center;">
                 {% for mood in moods %}
                     <span style="margin: 0 10px; display: inline-block;">
-                        <input type="checkbox" id="mood_{{ mood.id }}" name="moods" value="{{ mood.id }}">
+                        <input type="checkbox"
+                               id="mood_{{ mood.id }}"
+                               name="moods"
+                               value="{{ mood.id }}"
+                                {% if selected_moods and mood.id|string in selected_moods %}checked{% endif %}>
                         <label for="mood_{{ mood.id }}">{{ mood.label }}</label>
                     </span>
                 {% endfor %}
@@ -38,6 +55,34 @@
 
         </form>
     </div>
+
+    <script>
+        const textarea = document.getElementById('journal_content');
+        const charCountDisplay = document.getElementById('char_count');
+        const maxLength = 500;
+
+        // 1. Define the counting logic as a standalone function
+        function updateCounter() {
+            const currentLength = textarea.value.length;
+            charCountDisplay.textContent = `${currentLength} / ${maxLength} characters`;
+
+            if (currentLength >= maxLength) {
+                charCountDisplay.style.color = '#dc3545'; // Red (Limit hit)
+            } else if (currentLength >= maxLength - 100) {
+                charCountDisplay.style.color = '#ffc107'; // Yellow/Orange (Warning)
+            } else {
+                charCountDisplay.style.color = '#666';    // Normal Gray
+            }
+        }
+
+        // 2. Listen for typing (as before)
+        textarea.addEventListener('input', updateCounter);
+
+        // 3. CRITICAL ADDITION: Run it once immediately on page load!
+        // This fixes the "0 / 500" bug when text is pre-filled.
+        updateCounter();
+
+    </script>
 
 </body>
 </html>
