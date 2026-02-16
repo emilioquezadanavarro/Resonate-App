@@ -7,6 +7,7 @@ from app.services.ai_music_recommendation_agent import MusicRecommendationAgent
 from app.services.vector_engine import vector_engine
 from app.services.ai_chatbox_agent import chatbox_agent
 from app.services.past_recommendation_service import PastRecommendationService
+from app.services.ai_security_agent import security_agent
 
 # Create the Blueprint object
 main = Blueprint('main', __name__)
@@ -87,6 +88,9 @@ def journal():
     if 'user_id' not in session:
         return redirect(url_for('main.index'))
 
+    # Fetch Moods for the buttons
+    moods = Mood.query.all()
+
     if request.method == 'POST':
 
         # Get user info
@@ -94,36 +98,65 @@ def journal():
         content = request.form.get('content')
         mood_ids = request.form.getlist('moods')
 
-        # Create the new entry
-        new_entry_obj = JournalEntryService.create_entry(user_id, content, mood_ids)
+        if len(content) <= 500:
 
-        # Get the Mood Labels (Needed for Memory)
-        # We query the labels since the Vector Engine needs words ("Happy"), not IDs ("1")
-        current_moods = Mood.query.filter(Mood.id.in_(mood_ids)).all()
-        mood_labels = [m.label for m in current_moods]
+            # The Security check️ (Security Agent call)
+            # Verify safety BEFORE saving to the database.
+            safety_status = security_agent.check_safety(content)
 
-        # Vectorize the new entry
-        try:
+            if safety_status == "CRISIS":
+                # STOP: Do not save. Redirect to help.
+                return render_template('crisis.html', content=content)
 
-            vector_engine.add_entry(
-                entry_id=new_entry_obj.id,
-                text=content,
-                user_id=user_id,
-                mood_tags=mood_labels
-                )
+            elif safety_status == "TOXIC":
+                # STOP: Do not save. Redirect to warning.
+                return render_template('toxic.html')
 
-        except Exception as e:
-            # If the Memory Bank fails, we still want the user to proceed
-            print(f"Vector Engine Error: {e}")
+            elif safety_status == "ERROR":
+                # STOP: System Failure. Fail Closed.
+                flash("Security check failed. Please try again later.", "error")
+                return render_template('journal.html', moods=moods, content=content, selected_moods=mood_ids)
 
-        # Give feedback and leave the page
-        flash("Entry saved successfully! 📝")
-        return redirect(url_for('main.profile'))
+            # Success Path
+            # Create the new entry
+            new_entry_obj = JournalEntryService.create_entry(user_id, content, mood_ids)
 
-    # Fetch Moods for the buttons
-    moods = Mood.query.all()
+            if new_entry_obj:
 
-    # Show the Journaling Page
+                # Get the Mood Labels (Needed for Memory)
+                # We query the labels since the Vector Engine needs words ("Happy"), not IDs ("1")
+                current_moods = Mood.query.filter(Mood.id.in_(mood_ids)).all()
+                mood_labels = [m.label for m in current_moods]
+
+                # Vectorize the new entry
+                try:
+
+                    vector_engine.add_entry(
+                        entry_id=new_entry_obj.id,
+                        text=content,
+                        user_id=user_id,
+                        mood_tags=mood_labels
+                        )
+
+                except Exception as e:
+                    # If the Memory Bank fails, we still want the user to proceed
+                    print(f"Vector Engine Error: {e}")
+
+                # Give feedback and leave the page
+                flash("Entry saved successfully! 📝")
+                return redirect(url_for('main.profile'))
+
+            else:
+                # DB Failed (Locked or Error) -> Bounce back safely
+                print(" Database save failed.")
+                flash("System busy. Please try saving again in a moment.", "error")
+                return render_template('journal.html', moods=moods, content=content, selected_moods=mood_ids)
+        else:
+            # Failure Path (Entry is too Long)
+            flash(f"Your entry is {len(content)} characters. Please, short it to under 500.")
+            return render_template('journal.html', moods=moods, content=content, selected_moods=mood_ids )
+
+    # Show the Journaling Page (Get request)
     return render_template('journal.html', moods=moods)
 
 @main.route('/entry/<int:entry_id>')
