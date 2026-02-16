@@ -16,6 +16,10 @@ langfuse = get_client()
 
 class MusicRecommendationAgent:
 
+    def __init__(self, name="Shaka"):
+
+        print(f"Initializing Music Recommendation Agent {name} ... 🤖 🎹")
+
     @staticmethod
     def music_recommendation(content, mood_labels, ai_summary, age, gender, user_name, excluded_songs):
         """
@@ -94,7 +98,7 @@ class MusicRecommendationAgent:
                         model="gemini-2.5-flash",
                         config=types.GenerateContentConfig(
                             system_instruction=system_instruction,
-                            temperature=1 # Creative music picks
+                            temperature=1, # Creative music picks
                         ),
                         contents=user_message
                     )
@@ -154,3 +158,6 @@ class MusicRecommendationAgent:
                 span.update(level="ERROR", metadata={"error": str(e)})
                 langfuse.flush()
                 return []
+
+# Create the Singleton Instance
+music_recommendation_agent = MusicRecommendationAgent()

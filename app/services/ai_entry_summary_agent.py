@@ -13,6 +13,10 @@ client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 class SummaryAgent:
 
+    def __init__(self, name="Milo"):
+
+        print(f"Initializing Summary Agent {name} ... 🤖 📝")
+
     @staticmethod
     def analyze_sentiment(content, mood_labels):
         """
@@ -55,7 +59,8 @@ class SummaryAgent:
                             {"role": "system", "content": system_instruction},
                             {"role": "user", "content": user_message}
                         ],
-                        temperature=0.7     # Adds a little creativity/warmth
+                        temperature=0.7,     # Adds a little creativity/warmth
+                        max_tokens=250
                     )
 
                     summary = response.choices[0].message.content
@@ -82,3 +87,6 @@ class SummaryAgent:
                 print(f"❌ Summary Agent Error ❌: {e}")
                 langfuse.flush()
                 return "I'm having trouble connecting to my brain right now, but I hear you."
+
+# Create the Singleton Instance
+summary_agent = SummaryAgent()
