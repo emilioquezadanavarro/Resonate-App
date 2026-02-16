@@ -2,12 +2,12 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from .database import db, User, Mood
 from app.services.user_service import UserService
 from app.services.journal_services import JournalEntryService
-from app.services.ai_entry_summary_agent import SummaryAgent
-from app.services.ai_music_recommendation_agent import MusicRecommendationAgent
 from app.services.vector_engine import vector_engine
-from app.services.ai_chatbox_agent import chatbox_agent
-from app.services.past_recommendation_service import PastRecommendationService
 from app.services.ai_security_agent import security_agent
+from app.services.ai_chatbox_agent import chatbox_agent
+from app.services.ai_entry_summary_agent import summary_agent
+from app.services.ai_music_recommendation_agent import music_recommendation_agent
+from app.services.past_recommendation_service import PastRecommendationService
 
 # Create the Blueprint object
 main = Blueprint('main', __name__)
@@ -284,7 +284,7 @@ def analyze_entry(entry_id):
     mood_labels = [m.label for m in entry.moods]
 
     # PHASE 1: The Entry Summary Agent
-    summary = SummaryAgent.analyze_sentiment(entry.content, mood_labels)
+    summary = summary_agent.analyze_sentiment(entry.content, mood_labels)
 
     # Save to database
     if summary:
@@ -312,7 +312,7 @@ def analyze_entry(entry_id):
 
         # Call AI
         # Now returns a Python LIST of dictionaries: [{'title': 'X', 'artist': 'Y'}]
-        recommendations_list = MusicRecommendationAgent.music_recommendation(
+        recommendations_list = music_recommendation_agent.music_recommendation(
             content=entry.content,
             mood_labels=mood_labels,
             ai_summary=summary,
