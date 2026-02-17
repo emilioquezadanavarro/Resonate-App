@@ -86,6 +86,9 @@ class LibraryAgent:
         It runs the Reflexion Loop.
 
         """
+
+        print(f"📚📚 Aioros, the library agent is looking for book recommendations 📚📚")
+
         # Start the Main Span (The Whole Process)
         with langfuse.start_as_current_observation(
             as_type="span",
