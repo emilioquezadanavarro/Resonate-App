@@ -23,6 +23,9 @@ class SummaryAgent:
         Reads the journal entry and returns an empathetic summary.
         """
 
+        print(f"📝📝 Milo, the summary agent is writing your personal analysis 📝📝")
+
+
         # Langfuse - Start the Span
         with langfuse.start_as_current_observation(
             as_type="span",
