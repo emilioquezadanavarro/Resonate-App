@@ -112,6 +112,11 @@ def journal():
                 # STOP: Do not save. Redirect to warning.
                 return render_template('toxic.html')
 
+            elif safety_status == "INVALID":
+                # STOP: Do not save. Redirect them back to try again.
+                flash("We cound not quite understand that entry. Could you try writing it again?", "warning")
+                return redirect(url_for('main.profile'))
+
             elif safety_status == "ERROR":
                 # STOP: System Failure. Fail Closed.
                 flash("Security check failed. Please try again later.", "error")
