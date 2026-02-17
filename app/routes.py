@@ -210,6 +210,9 @@ def delete_entry(entry_id):
 @main.route('/entry/<int:entry_id>/update', methods=['GET', 'POST'])
 def update_entry(entry_id):
 
+    # Fetch Moods  (so they are available for both GET and POST errors)
+    all_moods = Mood.query.all()
+
     # Security check
     if 'user_id' not in session:
         return redirect(url_for('main.index'))
@@ -230,6 +233,35 @@ def update_entry(entry_id):
             flash("Entry content can't be empty.", 'error')
             return redirect(url_for('main.entry_detail', entry_id=entry_id))
 
+        # SECURITY AGENT CHECK
+        safety_status = security_agent.check_safety(new_content)
+
+        if safety_status == "CRISIS":
+            # STOP everything. Do not save. Show Crisis Page.
+            return render_template("crisis.html", content=new_content)
+
+        if safety_status == "TOXIC":
+            # STOP everything. Do not save. Show Toxic Page.
+            return render_template('toxic.html')
+
+        if safety_status == "INVALID":
+            # Warn user and let them try again (redirect back to Edit page)
+            flash("We couldn't quite understand that. Please write a meaningful entry.", "warning")
+
+            # Update the entry object locally (in memory only) with what they just typed
+            # This ensures the text box shows their draft, not the old DB version.
+            entry.content = new_content
+
+            # Preserve the checked moods they just clicked
+            entry.moods = [Mood.query.get(m_id) for m_id in new_mood_ids]
+
+            return render_template('edit_entry.html', entry=entry, moods=all_moods)
+
+        if safety_status == "ERROR":
+            flash("Security check failed. Please try again.", "danger")
+            return render_template('edit_entry.html', entry=entry, moods=all_moods)
+
+        # IF SAFE: Proceed to Update Database
         # Update the Main Database (SQL)
         updated_entry = JournalEntryService.update_entry_by_id(entry_id, new_content, new_mood_ids)
 
