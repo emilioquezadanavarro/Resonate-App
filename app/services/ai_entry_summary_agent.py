@@ -23,6 +23,7 @@ class SummaryAgent:
         Reads the journal entry and returns an empathetic summary.
         """
 
+        # Langfuse - Start the Span
         with langfuse.start_as_current_observation(
             as_type="span",
             name="Summary Agent",
@@ -43,8 +44,8 @@ class SummaryAgent:
 
                 user_message = f"User Moods: {moods_str}\n\nJournal Entry:\n{content}"
 
-                # Create the nested generation (Step 3)
-                # We log the combined prompt as the input for the generation
+                # Create the nested generation
+                # Log the combined prompt as the input for the generation
                 with langfuse.start_as_current_observation(
                         as_type="generation",
                         name="Summary Generation",
@@ -65,7 +66,7 @@ class SummaryAgent:
 
                     summary = response.choices[0].message.content
 
-                    # Update the generation with tokens (Step 3)
+                    # Update the generation with tokens
                     generation.update(
                         output=summary,
                         usage={
@@ -75,7 +76,7 @@ class SummaryAgent:
                         }
                     )
 
-                # Update the parent span and flush (Step 3)
+                # Update the parent span and flush
                 span.update(output=summary)
                 langfuse.flush()
 
