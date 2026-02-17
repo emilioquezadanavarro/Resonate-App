@@ -35,7 +35,7 @@ class MusicRecommendationAgent:
                 excluded_songs (list): A list of song titles to AVOID (Blacklist).
         """
 
-        print(f"🎸 Looking for music recommendations for User: {user_name} / Age: {age} / Gender: {gender}")
+        print(f"🎸🎸 Shaka, the music recommendation agent is looking for songs -> User: {user_name} / Age: {age} / Gender: {gender} 🎸🎸")
 
         # Start the Main Span - Langfuse
         with langfuse.start_as_current_observation(
