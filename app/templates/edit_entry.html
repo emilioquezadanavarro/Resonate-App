@@ -14,6 +14,26 @@
         <h1>✏️ Edit Entry</h1>
         <p style="color: gray;">{{ entry.created_at.strftime('%B %d, %Y') }}</p>
 
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <div style="margin: 20px 0; text-align: left;">
+              {% for category, message in messages %}
+                <div style="padding: 15px; margin-bottom: 10px; border-radius: 5px; font-weight: bold;
+                    {% if category == 'warning' %}
+                        background-color: #fff3cd; color: #856404; border: 1px solid #ffeeba; /* Yellow */
+                    {% elif category == 'error' or category == 'danger' %}
+                        background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; /* Red */
+                    {% elif category == 'success' %}
+                        background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; /* Green */
+                    {% endif %}
+                ">
+                  ⚠️ {{ message }}
+                </div>
+              {% endfor %}
+            </div>
+          {% endif %}
+        {% endwith %}
+
         <form method="POST">
 
             <textarea name="new_content" rows="15" cols="60" style="padding: 10px; font-size: 16px; width: 100%; box-sizing: border-box;" required>{{ entry.content }}</textarea>
