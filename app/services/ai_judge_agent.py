@@ -90,7 +90,7 @@ class JudgeAgent:
             with get_openai_callback() as callback:
 
                 try:
-                    print(f"⚖️ {name} is auditing the draft...")
+                    print(f"⚖️⚖️ {name}, the book expert is auditing the draft ⚖️⚖️")
 
                     # We invoke the chain with the TWO inputs
                     result = self.chain.invoke({
