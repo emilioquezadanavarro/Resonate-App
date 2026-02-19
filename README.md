@@ -2,6 +2,8 @@
 
 **Your AI-powered journaling companion.**
 
+🚀 **[Try Resonate Live Here](https://resonate-app-3jo6.onrender.com)**
+
 ---
 
 ## Features
