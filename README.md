@@ -2,6 +2,16 @@
 
 **Your AI-powered journaling companion.**
 
+<img width="1453" height="788" alt="Screenshot 2026-02-19 at 11 28 22" src="https://github.com/user-attachments/assets/cd81e44c-fcf6-4461-b6bf-25b507fec1c2" />
+
+<img width="1458" height="786" alt="Screenshot 2026-02-19 at 11 31 40" src="https://github.com/user-attachments/assets/e4009791-ed96-4de9-bcbe-80b7a4cde03c" />
+
+<img width="1458" height="786" alt="Screenshot 2026-02-19 at 11 35 17" src="https://github.com/user-attachments/assets/a5862ab1-23da-4d39-a99e-05bd07f2ed46" />
+
+<img width="1450" height="791" alt="Screenshot 2026-02-19 at 11 36 27" src="https://github.com/user-attachments/assets/562a3526-1c04-4161-ba2b-0ea672c8ed2c" />
+
+<img width="1451" height="785" alt="Screenshot 2026-02-19 at 11 38 09" src="https://github.com/user-attachments/assets/457e1d80-cf0d-4ebe-a3f8-e6adae894344" />
+
 ---
 
 ## Features
