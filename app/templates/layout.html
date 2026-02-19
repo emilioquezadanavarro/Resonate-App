@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="emerald">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resonate</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- DaisyUI CDN -->
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              'soft-offwhite': '#f8fafc'
+            },
+            fontFamily: {
+              serif: ['"Playfair Display"', 'serif']
+            },
+          }
+        }
+      }
+    </script>
+      <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.4.15/dist/full.css" rel="stylesheet" type="text/css" />
+  </head>
+  <body class="bg-soft-offwhite min-h-screen flex flex-col">
+    <!-- Navbar -->
+    <nav class="w-full shadow-md bg-white/90 backdrop-blur sticky top-0 z-30 relative mb-2">
+      <div class="navbar max-w-3xl mx-auto px-4 py-4">
+        <div class="navbar-start flex-1">
+          {% if not safety_page and request.endpoint and request.endpoint not in ['main.index', 'main.profile', 'main.create_profile'] %}
+            <a href="{{ url_for('main.profile') }}" class="absolute top-6 left-6 z-50 btn btn-ghost font-sans">
+              {% if request.endpoint == 'main.update_entry' %}
+                ← Cancel &amp; Back
+              {% else %}
+                ← Back to Profile
+              {% endif %}
+            </a>
+          {% endif %}
+        </div>
+
+        <div class="navbar-center flex-none">
+          <a href="{{ url_for('main.index') }}" class="text-3xl font-serif font-semibold text-gray-900 tracking-tight rounded-xl hover:bg-gray-50 transition px-5 py-2 inline-flex items-center">
+            Resonate <span aria-label="sprout" role="img">🌿</span>
+          </a>
+        </div>
+
+        <div class="flex-1"></div>
+      </div>
+
+      {% if safety_page %}
+        {# No nav links on crisis/toxic safety pages - logo only #}
+      {% elif request.endpoint == 'main.create_profile' %}
+        <a href="{{ url_for('main.index') }}" class="btn btn-ghost font-sans absolute top-6 right-6 z-50">Cancel</a>
+      {% elif session.get('user_id') and request.endpoint != 'main.index' %}
+        <a href="{{ url_for('main.index') }}" class="btn btn-ghost font-sans absolute top-6 right-6 z-50">Logout</a>
+      {% endif %}
+    </nav>
+
+    <!-- Flash messages -->
+    <div class="max-w-lg mx-auto my-6">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          <div class="space-y-4">
+            {% for category, message in messages %}
+              <div class="alert shadow-sm rounded-xl px-5 py-3 font-sans text-base {{ 'alert-'+category if category else 'bg-gray-100 text-gray-700' }} border border-gray-100">
+                {{ message }}
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      {% endwith %}
+    </div>
+
+    <!-- Main content -->
+    <main class="max-w-3xl mx-auto w-full px-4 py-8 font-sans flex-1">
+      {% block content %}{% endblock %}
+    </main>
+
+    <footer class="w-full py-10">
+      <div class="max-w-3xl mx-auto px-4 text-center text-sm text-gray-500 font-sans">
+        © 2026 Resonate App
+      </div>
+    </footer>
+
+    {% if not safety_page and request.endpoint and request.endpoint not in ['main.index', 'main.crisis', 'main.toxic'] %}
+    <!-- Floating Chat Widget & FAB -->
+    <div x-data="{ open: false }" x-init="$refs.chatWindow.style.display='none';"
+         class="fixed right-6 bottom-6 flex flex-col items-end space-y-4 pointer-events-none select-none z-[1000]">
+      <!-- Chat Window -->
+      <div x-ref="chatWindow"
+           x-show="open"
+           x-transition:enter="transition ease-out duration-200"
+           x-transition:enter-start="opacity-0 scale-95"
+           x-transition:enter-end="opacity-100 scale-100"
+           x-transition:leave="transition ease-in duration-100"
+           x-transition:leave-start="opacity-100 scale-100"
+           x-transition:leave-end="opacity-0 scale-95"
+           class="w-80 h-96 shadow-2xl bg-base-100 rounded-2xl flex flex-col overflow-hidden mb-4 pointer-events-auto select-auto"
+           style="display: none;"
+           id="chat-widget-card">
+        <div class="px-5 py-3 bg-white border-b flex items-center justify-between shadow-sm">
+          <div class="font-sans font-semibold text-gray-700 text-base flex items-center gap-2">
+            <span>🤖</span> Chat with Camus
+          </div>
+          <button type="button"
+            class="btn btn-ghost btn-xs rounded-full font-bold text-xl text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+            x-on:click="open = false"
+            aria-label="Close chat"
+            title="Close">
+            ×
+          </button>
+        </div>
+        <div id="chat-box"
+             class="flex-1 px-3 py-4 overflow-y-auto flex flex-col gap-3 bg-gray-50">
+          <div class="w-max max-w-[80%] bg-gray-200 text-gray-800 rounded-r-2xl rounded-tl-2xl px-4 py-2 text-sm align-left shadow-sm">
+            Hello! I'm here to help you reflect on your journal entries, find books to match your mood or simply speak about anything you like 🙂
+          </div>
+        </div>
+        <div id="loader" class="pl-4 pb-1 pt-1 text-xs text-gray-400 font-sans hidden">
+          Camus is writing ✍️ ...
+        </div>
+        <form class="flex items-center gap-2 px-4 py-3 border-t bg-white" id="chat-form" autocomplete="off">
+          <input type="text" id="user-input" placeholder="How can I help you ✨? " autocomplete="off" required
+                 class="input input-bordered input-md w-full rounded-xl font-sans text-base focus:outline-none focus:ring-2 focus:ring-primary transition" />
+          <button type="submit" class="btn btn-primary btn-sm rounded-xl font-sans">Send</button>
+        </form>
+      </div>
+      <button type="button"
+        class="btn btn-circle btn-primary btn-lg shadow-xl text-2xl flex items-center justify-center pointer-events-auto"
+        aria-label="Open chat" title="Open Chat"
+        x-on:click="open = true"
+        id="open-chat-fab">
+        💬
+      </button>
+    </div>
+    <script>
+      document.addEventListener('alpine:init', () => {
+        Alpine.data('chatWidget', () => ({ open: false }));
+      });
+      (function() {
+        const chatForm = document.getElementById('chat-form');
+        const chatBox = document.getElementById('chat-box');
+        const userInput = document.getElementById('user-input');
+        const loader = document.getElementById('loader');
+        function addMessage(text, sender) {
+          const div = document.createElement('div');
+          div.className = 'w-max max-w-[80%] px-4 py-2 text-sm shadow-sm break-words';
+          div.className += sender === 'user' ? ' ml-auto bg-primary text-white rounded-l-2xl rounded-tr-2xl' : ' mr-auto bg-gray-200 text-gray-800 rounded-r-2xl rounded-tl-2xl';
+          div.innerText = text;
+          if (chatBox) { chatBox.appendChild(div); chatBox.scrollTop = chatBox.scrollHeight; }
+        }
+        if (chatForm) {
+          chatForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const message = userInput ? userInput.value.trim() : '';
+            if (!message) return;
+            addMessage(message, 'user');
+            userInput.value = '';
+            if (loader) { loader.style.display = ''; loader.classList.remove('hidden'); }
+            try {
+              const res = await fetch('/chat', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ message: message }) });
+              const data = await res.json();
+              if (loader) { loader.style.display = 'none'; loader.classList.add('hidden'); }
+              data.error ? addMessage("Error: " + data.error, 'ai') : addMessage(data.response, 'ai');
+            } catch (err) {
+              if (loader) { loader.style.display = 'none'; loader.classList.add('hidden'); }
+              addMessage("Connection error.", 'ai');
+            }
+          });
+        }
+        document.addEventListener('keydown', function(e) {
+          if (e.key === 'Escape') {
+            const card = document.getElementById('chat-widget-card');
+            if (card && card.offsetParent !== null && card.closest('[x-data]') && card.closest('[x-data]').__x) {
+              card.closest('[x-data]').__x.$data.open = false;
+            }
+          }
+        });
+      })();
+    </script>
+    {% endif %}
+  </body>
+</html>

@@ -1,220 +1,60 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>{{ user.username }}'s Profile</title>
-    <style>
-        /* 1. LAYOUT: Splits the screen into Left (Journal) and Right (Chat) */
-        .container {
-            display: flex;
-            gap: 20px;
-            max-width: 1200px;
-            margin: 0 auto;
-            height: 90vh;
-        }
+{% extends "layout.html" %}
+{% block content %}
 
-        .left-panel {
-            flex: 1;
-            overflow-y: auto;
-            padding-right: 20px;
-        }
+<div class="flex flex-col items-center justify-start min-h-[70vh] w-full transition-all pt-2 pb-12">
 
-        .right-panel {
-            flex: 0 0 400px;
-            display: flex;
-            flex-direction: column;
-            border: 1px solid #ccc;
-            border-radius: 10px;
-            background: #f9f9f9;
-            overflow: hidden;
-        }
-
-        /* 2. CHAT STYLES */
-        .chat-header {
-            background: #007bff;
-            color: white;
-            padding: 15px;
-            text-align: center;
-            font-weight: bold;
-        }
-
-        #chat-box {
-            flex: 1;
-            padding: 15px;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .message {
-            max-width: 80%;
-            padding: 10px;
-            border-radius: 15px;
-            line-height: 1.4;
-            font-size: 14px;
-        }
-
-        .user-message {
-            align-self: flex-end;
-            background: #007bff;
-            color: white;
-            border-bottom-right-radius: 2px;
-        }
-
-        .ai-message {
-            align-self: flex-start;
-            background: #e0e0e0;
-            color: black;
-            border-bottom-left-radius: 2px;
-        }
-
-        .input-area {
-            display: flex;
-            border-top: 1px solid #ccc;
-            padding: 10px;
-            background: white;
-        }
-
-        .input-area input {
-            flex: 1;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 20px;
-            margin-right: 10px;
-        }
-
-        .input-area button {
-            padding: 10px 20px;
-            background: #007bff;
-            color: white;
-            border: none;
-            border-radius: 20px;
-            cursor: pointer;
-        }
-
-        #loader { display: none; margin: 10px; color: #888; font-style: italic; font-size: 12px;}
-    </style>
-</head>
-<body>
-
-    {% with messages = get_flashed_messages() %}
-        {% if messages %}
-            <div style="background-color: #d4edda; color: #155724; padding: 10px; margin-bottom: 20px; border: 1px solid #c3e6cb; border-radius: 5px; text-align: center;">
-                {% for message in messages %}
-                    {{ message }}
-                {% endfor %}
-            </div>
-        {% endif %}
-    {% endwith %}
-
-    <div class="container">
-
-        <div class="left-panel">
-
-            <div style="display: flex; justify-content: space-between; align-items: flex-start; padding: 20px 0;">
-                <div>
-                    <h1 style="margin: 0 0 5px 0;">Hi, {{ user.first_name }}!</h1>
-                    <p style="margin: 0; color: #666; font-size: 0.9rem;">
-                        User: <strong>{{ user.username }}</strong> &bull;
-                        Entries: <strong>{{ entries|length }}</strong>
-                    </p>
-                </div>
-                <a href="{{ url_for('main.index') }}" style="color: #0033ff; text-decoration: none; font-weight: bold;">Logout</a>
-            </div>
-
-            <hr>
-
-            <div style="text-align: center; margin: 40px;">
-                <h3>How are you feeling right now?</h3>
-                <a href="{{ url_for('main.journal') }}">
-                    <button style="padding: 15px 30px; font-size: 18px; cursor: pointer; background-color: #007bff; color: white; border: none; border-radius: 5px;">
-                        Write New Journal Entry
-                    </button>
-                </a>
-            </div>
-
-            <div style="margin: 20px 0;">
-                <h3>Your History</h3>
-
-                {% if entries %}
-                    <ul>
-                        {% for entry in entries %}
-                            <li>
-                                <a href="{{ url_for('main.entry_detail', entry_id=entry.id) }}">
-                                    <strong>{{ entry.created_at.strftime('%Y-%m-%d') }}:</strong>
-                                    {{ entry.content[:50] }}...
-                                </a>
-                            </li>
-                        {% endfor %}
-                    </ul>
-                {% else %}
-                    <p>You haven't written any entries yet. Start today!</p>
-                {% endif %}
-            </div>
-        </div>
-
-        <div class="right-panel">
-            <div class="chat-header">🤖 Chat with Camus</div>
-
-            <div id="chat-box">
-                <div class="message ai-message">
-                    Hello! I'm here to help you reflect on your journal entries, find books to match your mood or simply speak about anything you like 🙂
-                </div>
-            </div>
-
-            <div id="loader">Camus is writing ✍️ ...</div>
-
-            <form class="input-area" id="chat-form">
-                <input type="text" id="user-input" placeholder="How can I help you ✨? " autocomplete="off" required>
-                <button type="submit">Send</button>
-            </form>
-        </div>
-
+  <!-- Profile Header -->
+  <div class="w-full flex flex-col items-center space-y-1 mb-10">
+    <h1 class="font-serif text-3xl md:text-4xl font-semibold tracking-tight text-gray-900 mb-4 text-center">
+      Hi, {{ user.first_name }}!
+    </h1>
+    <div class="text-base text-gray-500 font-sans flex gap-4 flex-wrap items-center justify-center">
+      <span>
+        <span class="font-semibold text-gray-900">{{ user.username }}</span>
+      </span>
+      <span class="hidden sm:inline-block text-gray-400">•</span>
+      <span>
+        Entries: <span class="font-semibold text-gray-900">{{ entries|length }}</span>
+      </span>
     </div>
+  </div>
 
-    <script>
-        const chatForm = document.getElementById('chat-form');
-        const chatBox = document.getElementById('chat-box');
-        const userInput = document.getElementById('user-input');
-        const loader = document.getElementById('loader');
+  <!-- New Journal Entry Button -->
+  <div class="mb-12 w-full flex justify-center">
+    <a href="{{ url_for('main.journal') }}"
+       class="btn btn-primary w-full max-w-xs rounded-2xl text-lg font-sans shadow-md py-2.5 px-8 font-medium flex justify-center items-center text-center">
+      Write New Journal Entry
+    </a>
+  </div>
 
-        function addMessage(text, sender) {
-            const div = document.createElement('div');
-            div.classList.add('message');
-            div.classList.add(sender === 'user' ? 'user-message' : 'ai-message');
-            div.innerText = text;
-            chatBox.appendChild(div);
-            chatBox.scrollTop = chatBox.scrollHeight;
-        }
+  <!-- Your History Section -->
+  <div class="w-full mb-2">
+    <h2 class="font-serif text-2xl font-semibold text-gray-800 mb-6 pl-2">Your History</h2>
+    {% if entries %}
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        {% for entry in entries %}
+          <a href="{{ url_for('main.entry_detail', entry_id=entry.id) }}" class="block focus:outline-none focus:ring-2 focus:ring-primary transition">
+            <div class="card bg-white shadow-sm hover:shadow-md transition-shadow rounded-2xl h-full flex flex-col cursor-pointer border border-gray-100 group">
+              <div class="card-body p-5 flex-1 flex flex-col">
+                <h3 class="card-title font-serif text-lg font-semibold text-gray-700 group-hover:text-primary">
+                  {{ entry.created_at.strftime('%Y-%m-%d') }}
+                </h3>
+                <p class="text-gray-600 font-sans mt-2 text-base line-clamp-3">
+                  {{ entry.content[:100] }}{% if entry.content|length > 100 %}...{% endif %}
+                </p>
+              </div>
+            </div>
+          </a>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="w-full flex items-center justify-center py-12">
+        <p class="text-gray-500 text-base font-sans">
+          You haven't written any entries yet. Start today!
+        </p>
+      </div>
+    {% endif %}
+  </div>
+</div>
 
-        chatForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const message = userInput.value;
-            if (!message) return;
-
-            addMessage(message, 'user');
-            userInput.value = '';
-            loader.style.display = 'block';
-
-            try {
-                const response = await fetch('/chat', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ message: message })
-                });
-                const data = await response.json();
-                loader.style.display = 'none';
-
-                if (data.error) addMessage("Error: " + data.error, 'ai');
-                else addMessage(data.response, 'ai');
-
-            } catch (error) {
-                loader.style.display = 'none';
-                addMessage("Connection error.", 'ai');
-            }
-        });
-    </script>
-
-</body>
-</html>
+{% endblock %}

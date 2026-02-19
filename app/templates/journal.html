@@ -1,88 +1,67 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>New Entry - Resonate</title>
-</head>
-<div style="text-align: center; margin-top: 10px;">
-        {% with messages = get_flashed_messages() %}
-            {% if messages %}
-                {% for message in messages %}
-                    <div style="display: inline-block; padding: 10px 20px; background-color: #ffcccc; color: #cc0000; border-radius: 5px; border: 1px solid #ff0000; margin-bottom: 10px;">
-                        {{ message }}
-                    </div>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
-    </div>
-<body>
+{% extends "layout.html" %}
+{% block content %}
+<div class="max-w-3xl mx-auto pt-2 pb-12 px-4">
 
-    <div style="padding: 20px;">
-        <a href="{{ url_for('main.profile') }}">← Back to Profile</a>
-    </div>
+  <!-- Page Heading -->
+  <h1 class="text-4xl font-serif font-bold text-gray-900 mb-4 text-center">New Journal Entry</h1>
+  <div class="text-gray-500 mb-8 text-center font-sans text-lg">
+    What's on your mind?
+  </div>
 
-    <div style="text-align: center; margin-top: 20px;">
-        <h1>New Journal Entry</h1>
+  <!-- Journal Entry Form with Alpine.js -->
+  <form method="POST" x-data="{ text: '{{ content if content else '' }}' }" class="space-y-8">
 
-        <form method="POST">
-
-            <h3>What's on your mind?</h3>
-            <textarea id="journal_content" name="content" rows="8" cols="60" placeholder="Dear diary..." maxlength="500" required>{{ content if content else '' }}</textarea>
-            <div id="char_count" style="font-size: 14px; color: #666; margin-top: 5px;">
-            0 / 500 characters
-            </div>
-            <br><br>
-
-            <h3>How are you feeling? (Select all that apply)</h3>
-            <div style="max-width: 600px; margin: 0 auto; text-align: center;">
-                {% for mood in moods %}
-                    <span style="margin: 0 10px; display: inline-block;">
-                        <input type="checkbox"
-                               id="mood_{{ mood.id }}"
-                               name="moods"
-                               value="{{ mood.id }}"
-                                {% if selected_moods and mood.id|string in selected_moods %}checked{% endif %}>
-                        <label for="mood_{{ mood.id }}">{{ mood.label }}</label>
-                    </span>
-                {% endfor %}
-            </div>
-
-            <br><br>
-
-            <button type="submit" style="padding: 10px 20px; font-size: 16px; background-color: #007bff; color: white; border: none; cursor: pointer;">
-                Save Entry
-            </button>
-
-        </form>
+    <!-- Textarea & Counter -->
+    <div>
+      <textarea
+        x-model="text"
+        name="content"
+        maxlength="500"
+        required
+        placeholder="Dear diary..."
+        class="textarea textarea-bordered w-full h-64 text-lg p-6 rounded-2xl focus:border-primary focus:outline-none shadow-sm font-sans resize-none"
+        aria-label="Journal Content"></textarea>
+      <div class="text-right text-sm mt-2 font-sans"
+           :class="text.length >= 500 ? 'text-error' : (text.length >= 400 ? 'text-warning' : 'text-gray-400')">
+        <span x-text="text.length"></span> / 500 characters
+      </div>
     </div>
 
-    <script>
-        const textarea = document.getElementById('journal_content');
-        const charCountDisplay = document.getElementById('char_count');
-        const maxLength = 500;
+    <!-- Mood Selection -->
+    <div>
+      <h3 class="text-gray-800 font-semibold text-lg mb-1 text-center font-sans">How are you feeling?</h3>
+      <p class="text-gray-400 font-normal text-sm text-center mb-3">(Select all that apply)</p>
+      <div class="flex flex-wrap justify-center gap-x-3 gap-y-4 mt-6">
+        {% for mood in moods %}
+          <div>
+            <input
+              type="checkbox"
+              id="mood_{{ mood.id }}"
+              name="moods"
+              value="{{ mood.id }}"
+              class="peer sr-only"
+              {% if selected_moods and mood.id|string in selected_moods %}checked{% endif %}>
+            <label
+              for="mood_{{ mood.id }}"
+              class="cursor-pointer px-5 py-2 rounded-full border border-gray-300 text-gray-600 transition hover:border-primary font-sans
+                hover:bg-green-50 peer-checked:bg-primary peer-checked:bg-green-100 peer-checked:text-green-900 peer-checked:border-primary peer-checked:border-green-300 peer-checked:font-bold select-none text-base">
+              {{ mood.label }}
+            </label>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
 
-        // 1. Define the counting logic as a standalone function
-        function updateCounter() {
-            const currentLength = textarea.value.length;
-            charCountDisplay.textContent = `${currentLength} / ${maxLength} characters`;
+    <!-- Submit Button -->
+    <div class="flex justify-center">
+      <button type="submit" class="btn btn-primary btn-wide rounded-xl mt-6 font-sans text-lg font-semibold shadow-md">
+        Save Entry
+      </button>
+    </div>
+  </form>
 
-            if (currentLength >= maxLength) {
-                charCountDisplay.style.color = '#dc3545'; // Red (Limit hit)
-            } else if (currentLength >= maxLength - 100) {
-                charCountDisplay.style.color = '#ffc107'; // Yellow/Orange (Warning)
-            } else {
-                charCountDisplay.style.color = '#666';    // Normal Gray
-            }
-        }
+</div>
 
-        // 2. Listen for typing (as before)
-        textarea.addEventListener('input', updateCounter);
+<!-- Alpine.js - Already loaded in layout.html -->
 
-        // 3. CRITICAL ADDITION: Run it once immediately on page load!
-        // This fixes the "0 / 500" bug when text is pre-filled.
-        updateCounter();
-
-    </script>
-
-</body>
-</html>
+{% endblock %}
