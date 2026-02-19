@@ -106,11 +106,11 @@ def journal():
 
             if safety_status == "CRISIS":
                 # STOP: Do not save. Redirect to help.
-                return render_template('crisis.html', content=content)
+                return render_template('crisis.html', content=content, safety_page=True)
 
             elif safety_status == "TOXIC":
                 # STOP: Do not save. Redirect to warning.
-                return render_template('toxic.html')
+                return render_template('toxic.html', safety_page=True)
 
             elif safety_status == "INVALID":
                 # STOP: Do not save. Redirect them back to try again.
@@ -238,11 +238,11 @@ def update_entry(entry_id):
 
         if safety_status == "CRISIS":
             # STOP everything. Do not save. Show Crisis Page.
-            return render_template("crisis.html", content=new_content)
+            return render_template("crisis.html", content=new_content, safety_page=True)
 
         if safety_status == "TOXIC":
             # STOP everything. Do not save. Show Toxic Page.
-            return render_template('toxic.html')
+            return render_template('toxic.html', safety_page=True)
 
         if safety_status == "INVALID":
             # Warn user and let them try again (redirect back to Edit page)
