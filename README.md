@@ -112,18 +112,6 @@ Open [http://127.0.0.1:5000/](http://127.0.0.1:5000/) in your browser.
 
 ---
 
-## Deployment (Render)
-
-The app includes `gunicorn` for production. Use a start command such as:
-
-```bash
-gunicorn -w 4 -b 0.0.0.0:$PORT "run:app"
-```
-
-Ensure your Render service is configured to run this command and that all required environment variables are set in the Render dashboard.
-
----
-
 ## Visuals
 
 <img width="1453" height="788" alt="Screenshot 2026-02-19 at 11 28 22" src="https://github.com/user-attachments/assets/cd81e44c-fcf6-4461-b6bf-25b507fec1c2" />
