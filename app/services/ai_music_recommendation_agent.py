@@ -120,10 +120,10 @@ class MusicRecommendationAgent:
 
                     generation.update(
                         output=raw_text,
-                        usage={
-                            "promptTokens": prompt_tokens,
-                            "completionTokens": completion_tokens,
-                            "totalTokens": total_tokens
+                        usage_details={
+                            "input": prompt_tokens,
+                            "output": completion_tokens,
+                            "total": total_tokens
                         }
                     )
 
@@ -146,17 +146,14 @@ class MusicRecommendationAgent:
                 if isinstance(recommendations, list):
                     # Update the span with the final clean list
                     span.update(output=recommendations)
-                    langfuse.flush()
                     return recommendations # Returns a real List!
                 else:
                     span.update(level="WARNING", status_message="Output was not a list")
-                    langfuse.flush()
                     return []
 
             except Exception as e:
                 print(f" Music recommendation agent error ❌ : {e}")
                 span.update(level="ERROR", metadata={"error": str(e)})
-                langfuse.flush()
                 return []
 
 # Create the Singleton Instance

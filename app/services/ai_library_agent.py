@@ -145,10 +145,10 @@ class LibraryAgent:
                     # Update Langfuse with the AI's raw text and cost
                     generation.update(
                         output=draft,
-                        usage={
-                            "promptTokens": callback.prompt_tokens,
-                            "completionTokens": callback.completion_tokens,
-                            "totalTokens": callback.total_tokens
+                        usage_details={
+                            "input": callback.prompt_tokens,
+                            "output": callback.completion_tokens,
+                            "total": callback.total_tokens
                         }
                     )
 
@@ -183,7 +183,6 @@ class LibraryAgent:
                         if isinstance(real_book_list, list):
                             # Update the main span with the final result
                             span.update(output=real_book_list)
-                            langfuse.flush()
                             return real_book_list
                         else:
                             print("⚠️ AI output was not a list.")
@@ -210,7 +209,6 @@ class LibraryAgent:
                     if isinstance(real_book_list, list):
 
                         span.update(output=real_book_list, level="WARNING")
-                        langfuse.flush()
                         print("Fallback successful. Returning imperfect list. 🤷‍♂️")
                         return real_book_list
 
@@ -219,7 +217,6 @@ class LibraryAgent:
 
             # If everything truly failed (syntax errors), then return empty.
             span.update(output=[], level="ERROR", status_message="Failed to generate valid list")
-            langfuse.flush()
             return []
 
 # Create the Singleton Instance

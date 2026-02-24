@@ -173,18 +173,15 @@ class ChatBoxAgent:
                 # We use response["output"] because response is a Dict, not an Object
                 generation.update(
                     output=response["output"],
-                    usage={
-                        "promptTokens": callback.prompt_tokens,
-                        "completionTokens": callback.completion_tokens,
-                        "totalTokens": callback.total_tokens
+                    usage_details={
+                        "input": callback.prompt_tokens,
+                        "output": callback.completion_tokens,
+                        "total": callback.total_tokens
                     }
                 )
 
             # Update the parent span
             span.update(output=response["output"])
-
-            # Send data to cloud
-            langfuse.flush()
 
             # The response is a big object. Final answer string.
             return response["output"]

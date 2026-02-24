@@ -100,10 +100,10 @@ class JudgeAgent:
 
                     generation.update(
                         output=result,
-                        usage={
-                            "promptTokens": callback.prompt_tokens,
-                            "completionTokens": callback.completion_tokens,
-                            "totalTokens": callback.total_tokens
+                        usage_details={
+                            "input": callback.prompt_tokens,
+                            "output": callback.completion_tokens,
+                            "total": callback.total_tokens
                         }
                     )
 

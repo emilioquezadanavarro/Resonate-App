@@ -91,16 +91,15 @@ class SecurityAgent:
                     # Update the generation with tokens
                     generation.update(
                         output=result,
-                        usage={
-                            "promptTokens": response.usage.prompt_tokens,
-                            "completionTokens": response.usage.completion_tokens,
-                            "totalTokens": response.usage.total_tokens
+                        usage_details={
+                            "input": response.usage.prompt_tokens,
+                            "output": response.usage.completion_tokens,
+                            "total": response.usage.total_tokens
                             }
                         )
 
-                    # Update the parent span and flush
+                    # Update the parent span
                     span.update(output=result)
-                    langfuse.flush()
 
                     return result
 

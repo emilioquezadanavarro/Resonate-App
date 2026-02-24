@@ -72,16 +72,15 @@ class SummaryAgent:
                     # Update the generation with tokens
                     generation.update(
                         output=summary,
-                        usage={
-                            "promptTokens": response.usage.prompt_tokens,
-                            "completionTokens": response.usage.completion_tokens,
-                            "totalTokens": response.usage.total_tokens
+                        usage_details={
+                            "input": response.usage.prompt_tokens,
+                            "output": response.usage.completion_tokens,
+                            "total": response.usage.total_tokens
                         }
                     )
 
-                # Update the parent span and flush
+                # Update the parent span
                 span.update(output=summary)
-                langfuse.flush()
 
                 # 4. Return just the text summary
                 return summary
@@ -89,7 +88,6 @@ class SummaryAgent:
             except Exception as e:
                 span.update(level="ERROR", metadata={"error": str(e)})
                 print(f"❌ Summary Agent Error ❌: {e}")
-                langfuse.flush()
                 return "I'm having trouble connecting to my brain right now, but I hear you."
 
 # Create the Singleton Instance
