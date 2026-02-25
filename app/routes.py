@@ -1,3 +1,4 @@
+import threading
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session, jsonify
 from .database import db, User, Mood
 from app.services.user_service import UserService
@@ -133,19 +134,26 @@ def journal():
                 current_moods = Mood.query.filter(Mood.id.in_(mood_ids)).all()
                 mood_labels = [m.label for m in current_moods]
 
-                # Vectorize the new entry
-                try:
+                # Vectorize the new entry in the background
+                # (Runs after the response is sent to avoid worker timeout on Render)
+                # Capture values before the thread starts (thread has no Flask app context)
+                _entry_id = new_entry_obj.id
+                _content = content
+                _user_id = user_id
+                _mood_labels = list(mood_labels)
 
-                    vector_engine.add_entry(
-                        entry_id=new_entry_obj.id,
-                        text=content,
-                        user_id=user_id,
-                        mood_tags=mood_labels
+                def _vectorize_entry():
+                    try:
+                        vector_engine.add_entry(
+                            entry_id=_entry_id,
+                            text=_content,
+                            user_id=_user_id,
+                            mood_tags=_mood_labels
                         )
+                    except Exception as e:
+                        print(f"Vector Engine Error: {e}")
 
-                except Exception as e:
-                    # If the Memory Bank fails, we still want the user to proceed
-                    print(f"Vector Engine Error: {e}")
+                threading.Thread(target=_vectorize_entry, daemon=True).start()
 
                 # Give feedback and leave the page
                 flash("Entry saved successfully! 📝")
@@ -266,31 +274,26 @@ def update_entry(entry_id):
         updated_entry = JournalEntryService.update_entry_by_id(entry_id, new_content, new_mood_ids)
 
         if updated_entry:
-            # ======= SYNC START =======
-            # Update the Vector DB
-            try:
-                # A - Delete the old memory
-                vector_engine.delete_entry(entry_id)
+            # ======= VECTOR SYNC (Background) =======
+            # Runs after the response is sent to avoid worker timeout on Render
+            _update_user_id = session['user_id']
+            _update_mood_tags = [m.label for m in updated_entry.moods]
 
-                # B. Get the NEW mood labels
-                # Since we just updated the DB, 'updated_entry.moods' has the new list.
-                current_mood_tags = [m.label for m in updated_entry.moods]
+            def _sync_vector_db():
+                try:
+                    vector_engine.delete_entry(entry_id)
+                    vector_engine.add_entry(
+                        entry_id,
+                        new_content,
+                        _update_user_id,
+                        _update_mood_tags
+                    )
+                    print(f"✅ Synced update for Entry {entry_id} in Vector DB.")
+                except Exception as e:
+                    print(f"⚠️ Warning: Vector update failed: {e}")
 
-                # C. Create the new memory
-                vector_engine.add_entry(
-                    entry_id,
-                    new_content,
-                    session['user_id'],
-                    current_mood_tags  # Passing the list of strings of the updated entry ["Happy", "Calm"]
-                )
-
-                print(f"✅ Synced update for Entry {entry_id} in Vector DB.")
-
-            except Exception as e:
-                # If the AI update fails, don't crash the web app. Just log it.
-                print(f"⚠️ Warning: Vector update failed: {e}")
-
-            # ======= SYNC END =======
+            threading.Thread(target=_sync_vector_db, daemon=True).start()
+            # ======= VECTOR SYNC END =======
 
             flash("Entry updated successfully!", 'success')
             return redirect(url_for('main.entry_detail', entry_id=entry_id))
