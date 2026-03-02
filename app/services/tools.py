@@ -15,6 +15,7 @@ def search_journal_memory(query_text: str, user_id: int, result_limit: int = 3) 
         result_limit: The number of entries to retrieve.
                       - DEFAULT to 3 for specific questions (e.g., "What did I eat?").
                       - INCREASE to 10 ONLY for broad summaries (e.g., "Summarize my week").
+                      - INCREASE to 1000 ONLY for counting entries (e.g., "How many entries do I have?").
     """
 
     # FORCE STRING
