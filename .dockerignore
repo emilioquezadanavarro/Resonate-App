@@ -1,0 +1,8 @@
+.env
+.venv/
+chroma_db/
+resonate.db
+.git/
+__pycache__/
+.idea/
+.DS_Store
