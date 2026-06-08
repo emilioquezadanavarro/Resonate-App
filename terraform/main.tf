@@ -179,7 +179,7 @@ resource "aws_db_instance" "main" {
 
 resource "aws_instance" "main" {
   ami                    = "ami-00e801948462f718a"  #  us-east-1
-  instance_type          = "t2.micro"
+  instance_type          = "t3.small"
   subnet_id              = aws_subnet.main.id # Public subnet 
   vpc_security_group_ids = [aws_security_group.resonate-ec2.id]
   key_name               = "resonate-key"
