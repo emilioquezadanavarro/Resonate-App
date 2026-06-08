@@ -70,3 +70,66 @@ resource "aws_route_table_association" "main" {
   subnet_id      = aws_subnet.main.id
   route_table_id = aws_route_table.main.id
 }
+
+# Resource 6: Security Group 1 (EC2)
+
+resource "aws_security_group" "resonate-ec2" {
+  name        = "resonate-ec2"
+  description = "Security group for EC2 - allows HTTP and SSH inbound"
+  vpc_id      = aws_vpc.main.id
+
+  tags = {
+    Name = "resonate-ec2"
+  }
+}
+
+# INBOUD RULES
+
+resource "aws_vpc_security_group_ingress_rule" "allow_http" {
+
+  security_group_id = aws_security_group.resonate-ec2.id
+  cidr_ipv4         = "0.0.0.0/0"
+  from_port         = 80
+  to_port           = 80
+  ip_protocol       = "tcp"
+}
+
+resource "aws_vpc_security_group_ingress_rule" "allow_shh" {
+
+  security_group_id = aws_security_group.resonate-ec2.id
+  cidr_ipv4         = "0.0.0.0/0"
+  from_port         = 22
+  to_port           = 22
+  ip_protocol       = "tcp"
+}
+
+resource "aws_vpc_security_group_egress_rule" "allow_all_traffic" {
+  security_group_id = aws_security_group.resonate-ec2.id
+  cidr_ipv4         = "0.0.0.0/0"
+  ip_protocol       = "-1" # semantically equivalent to all ports
+}
+
+
+
+# Resource 7 Security Group 2 (RDS)
+
+resource "aws_security_group" "resonate-rds" {
+  name        = "resonate-rds"
+  description = "Security group for RDS - allows PostgreSQL on port 5432"
+  vpc_id      = aws_vpc.main.id
+
+  tags = {
+    Name = "resonate-rds"
+  }
+}
+
+# INBOUD RULE
+
+resource "aws_vpc_security_group_ingress_rule" "allow_postgres" {
+
+  security_group_id = aws_security_group.resonate-rds.id
+  referenced_security_group_id = aws_security_group.resonate-ec2.id # Restricts access to only the EC2 instance
+  from_port         = 5432
+  to_port           = 5432
+  ip_protocol       = "tcp"
+}
