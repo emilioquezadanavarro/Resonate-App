@@ -26,3 +26,6 @@ langfuse==3.14.1
 
 # --- Production Server ---
 gunicorn>=21.0.0
+
+# --- PostgreSQL driver for Python ---
+psycopg2-binary>=2.9.0
