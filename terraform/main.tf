@@ -133,3 +133,66 @@ resource "aws_vpc_security_group_ingress_rule" "allow_postgres" {
   to_port           = 5432
   ip_protocol       = "tcp"
 }
+
+# Resource 8 Private Subnet (RDS) / Different AZ in case of failure. 
+
+resource "aws_subnet" "rds-main" {
+  vpc_id     = aws_vpc.main.id
+  cidr_block = "10.0.2.0/24"
+  availability_zone = "us-east-1b"
+  map_public_ip_on_launch = false
+
+  tags = {
+    Name = "RDS-Private"
+  }
+}
+
+# Resource 9: DB Subnet Group
+
+resource "aws_db_subnet_group" "default" {
+  name       = "main"
+  description = "Subnet group for Resonate RDS instance"  
+  subnet_ids = [aws_subnet.main.id, aws_subnet.rds-main.id]
+  tags = {
+    Name = "Resonate-db-subnet-group"
+  }
+}
+
+# Resource 10: RDS Instance
+
+resource "aws_db_instance" "main" {
+  identifier           = "resonate-db"
+  engine               = "postgres"
+  engine_version       = "16"
+  instance_class       = "db.t3.micro"
+  allocated_storage    = 20
+  db_name              = "resonate"
+  username             = "postgres"
+  password             = var.db_password
+  db_subnet_group_name = aws_db_subnet_group.default.name
+  vpc_security_group_ids = [aws_security_group.resonate-rds.id]
+  publicly_accessible  = false
+  skip_final_snapshot  = true
+}
+
+# Resource 11: EC2 Instance
+
+resource "aws_instance" "main" {
+  ami                    = "ami-00e801948462f718a"  #  us-east-1
+  instance_type          = "t2.micro"
+  subnet_id              = aws_subnet.main.id # Public subnet 
+  vpc_security_group_ids = [aws_security_group.resonate-ec2.id]
+  key_name               = "resonate-key"
+
+  user_data = <<-EOF
+  #!/bin/bash
+  yum update -y
+  yum install -y docker
+  service docker start
+  usermod -a -G docker ec2-user
+  
+  EOF
+  tags = {
+    Name = "resonate-ec2"
+  }
+}
