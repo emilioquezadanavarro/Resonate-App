@@ -16,10 +16,11 @@
 
 ## Tech Stack
 
-- **Backend:** Flask
+- **Backend:** Flask + Gunicorn
 - **Frontend:** Alpine.js, Tailwind CSS, DaisyUI
-- **Database:** SQLite (Flask-SQLAlchemy) + ChromaDB (vector embeddings for journal memory search)
+- **Database:** PostgreSQL 16 (AWS RDS, via Flask-SQLAlchemy) + ChromaDB (vector embeddings for journal memory search)
 - **AI Integration:** OpenAI (summaries, security, embeddings), Google Gemini (music recommendations), Tavily (web search for chat)
+- **Infrastructure:** AWS (EC2 + RDS + VPC), Docker, Terraform
 
 ---
 
@@ -53,8 +54,13 @@ Resonate-App/
 │       ├── entry_detail.html                 # View entry, AI insights, music card
 │       ├── crisis.html                       # Safety page — crisis resources (no nav links)
 │       └── toxic.html                        # Safety page — content blocked (no nav links)
+├── terraform/                                # Infrastructure as Code (Terraform)
+│   ├── main.tf                               # All AWS resources (VPC, subnets, SGs, RDS, EC2)
+│   ├── variables.tf                          # Input variables (db_password)
+│   └── outputs.tf                            # Outputs (EC2 IP, RDS endpoint)
 ├── run.py                                    # Entry point, dev server
 ├── setup_db.py                               # DB init, seed moods
+├── Dockerfile                                # Container image definition
 ├── requirements.txt
 ├── .env                                      # API keys (not in repo)
 └── chroma_db/                                # ChromaDB vector store (created at runtime)
@@ -109,6 +115,56 @@ python run.py
 ```
 
 Open [http://127.0.0.1:5000/](http://127.0.0.1:5000/) in your browser.
+
+---
+
+## Cloud Deployment (AWS)
+
+Resonate is deployed on AWS in `us-east-1` using EC2, RDS PostgreSQL, and a custom VPC — all provisioned with Terraform and containerised with Docker.
+
+**Live app:** http://32.196.130.174
+
+---
+
+### Architecture
+
+```mermaid
+graph TD
+    User("👤 User") -->|"HTTP port 80"| IGW["Internet Gateway"]
+
+    subgraph VPC["VPC — 10.0.0.0/16"]
+        IGW --> EC2
+
+        subgraph Public["Public Subnet — 10.0.1.0/24 (us-east-1a)"]
+            EC2["EC2 t3.small\n(Amazon Linux 2023)"]
+            Container["Docker Container\nGunicorn → Flask → SQLAlchemy"]
+            EC2 --> Container
+        end
+
+        subgraph Private["Private Subnet — 10.0.2.0/24 (us-east-1b)"]
+            RDS["RDS PostgreSQL 16\ndb.t3.micro"]
+        end
+
+        Container -->|"port 5432 (EC2 SG only)"| RDS
+    end
+```
+
+---
+
+### Infrastructure at a Glance
+
+| Service | Config | Purpose |
+|---|---|---|
+| EC2 | `t3.small`, Amazon Linux 2023 | Runs the Docker container |
+| RDS | PostgreSQL 16, `db.t3.micro`, 20 GB | Managed relational database |
+| VPC | `10.0.0.0/16` | Isolated private network |
+| Public Subnet | `10.0.1.0/24`, `us-east-1a` | EC2 — internet-facing |
+| Private Subnet | `10.0.2.0/24`, `us-east-1b` | RDS — no public internet access |
+| Security Groups | Port 80/22 for EC2; port 5432 (EC2 SG only) for RDS | Firewall rules |
+
+**Key security decision:** The RDS instance is in a private subnet with `publicly_accessible = false`. Port 5432 is open only to the EC2 security group — not to the internet.
+
+→ See [AWS Deployment Guide](AWS_DEPLOYMENT_GUIDE.md) for the full architecture walkthrough, Terraform setup, deployment commands, and lessons learned.
 
 ---
 
