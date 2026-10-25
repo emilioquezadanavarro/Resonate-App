@@ -18,7 +18,7 @@
 
 - **Backend:** Flask
 - **Frontend:** Alpine.js, Tailwind CSS, DaisyUI
-- **Database:** SQLite (Flask-SQLAlchemy) + ChromaDB (vector embeddings for journal memory search)
+- **Database:** SQLite (Flask-SQLAlchemy) + ChromaDB to Database: SQLite locally (PostgreSQL on AWS, see below) + ChromaDB
 - **AI Integration:** OpenAI (summaries, security, embeddings), Google Gemini (music recommendations), Tavily (web search for chat)
 
 ---
