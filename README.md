@@ -120,9 +120,9 @@ Open [http://127.0.0.1:5000/](http://127.0.0.1:5000/) in your browser.
 
 ## Cloud Deployment (AWS)
 
-Resonate is deployed on AWS in `us-east-1` using EC2, RDS PostgreSQL, and a custom VPC — all provisioned with Terraform and containerised with Docker.
+Resonate was deployed on AWS in `us-east-1` as part of my Masterschool graduation project, using EC2, RDS PostgreSQL and a custom VPC, all provisioned with Terraform and containerised with Docker.
 
-**Live app:** http://32.196.130.174
+> **Status: torn down.** The infrastructure was destroyed with `terraform destroy` after the project review to avoid ongoing costs, so there is no live URL. The Terraform code, the Dockerfile and the deployment guide in this branch are enough to rebuild it.
 
 ---
 
