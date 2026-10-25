@@ -112,6 +112,18 @@ Open [http://127.0.0.1:5000/](http://127.0.0.1:5000/) in your browser.
 
 ---
 
+## Cloud Deployment (AWS)
+
+Resonate was deployed on AWS (`us-east-1`) as part of my Masterschool graduation project. The deployment uses PostgreSQL on RDS in place of the local SQLite database, with all infrastructure provisioned in Terraform and the app containerised with Docker.
+
+**Code, Terraform files and deployment guide:** [`aws-deployment` branch](https://github.com/emilioquezadanavarro/Resonate-App/tree/aws-deployment) · [AWS Deployment Guide](https://github.com/emilioquezadanavarro/Resonate-App/blob/aws-deployment/AWS_DEPLOYMENT_GUIDE.md)
+
+> **Status: torn down.** The infrastructure was destroyed with `terraform destroy` after the project review to avoid ongoing costs, so there is no live URL.
+
+**Key security decision:** the RDS instance sits in a private subnet with `publicly_accessible = false`, and port 5432 is open only to the application's security group, not to the internet.
+
+---
+
 ## Visuals
 
 <img width="1453" height="788" alt="Screenshot 2026-02-19 at 11 28 22" src="https://github.com/user-attachments/assets/cd81e44c-fcf6-4461-b6bf-25b507fec1c2" />
